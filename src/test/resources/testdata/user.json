@@ -1,0 +1,19 @@
+{
+  "title":         "Mr",
+  "name":          "abdallah",
+  "firstName":     "Abdallah",
+  "lastName":      "Mahrous",
+  "email":         "asm7391@test.com",
+  "password":      "Test@1234",
+  "dayOfBirth":    "27",
+  "monthOfBirth":  "February",
+  "yearOfBirth":   "2001",
+  "company":       "EDGES",
+  "address1":      "123 Test Street",
+  "address2":      "Suite 456",
+  "country":       "United States",
+  "state":         "California",
+  "city":          "Los Angeles",
+  "zipcode":       "90001",
+  "mobileNumber":  "5551234567"
+}

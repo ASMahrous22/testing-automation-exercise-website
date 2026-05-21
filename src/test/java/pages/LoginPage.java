@@ -1,6 +1,7 @@
 package pages;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import testdata.UserData;
 import utils.ASM_Framework;
 
@@ -15,11 +16,11 @@ import utils.ASM_Framework;
 public class LoginPage extends BasePage
 {
     // ── Login form ────────────────────────────────────────────────────────
-    private final By loginHeading     = By.xpath("//h2[text()='Login to your account']");
-    private final By loginEmailField  = By.cssSelector("[data-qa='login-email']");
+    private final By loginHeading       = By.xpath("//h2[text()='Login to your account']");
+    private final By loginEmailField    = By.cssSelector("[data-qa='login-email']");
     private final By loginPasswordField = By.cssSelector("[data-qa='login-password']");
-    private final By loginButton      = By.cssSelector("[data-qa='login-button']");
-    private final By loginErrorMsg    = By.xpath("//p[text()='Your email or password is incorrect!']");
+    private final By loginButton        = By.cssSelector("[data-qa='login-button']");
+    private final By loginErrorMsg      = By.xpath("//p[text()='Your email or password is incorrect!']");
 
     // ── Signup form ───────────────────────────────────────────────────────
     private final By signupHeading    = By.xpath("//h2[text()='New User Signup!']");
@@ -58,6 +59,16 @@ public class LoginPage extends BasePage
     private final By accountCreatedHeading = By.xpath("//b[text()='Account Created!']");
     private final By continueBtn           = By.cssSelector("[data-qa='continue-button']");
 
+    // ── Ad overlay (appears on the 'Account Created!' page) ───────────────
+    // The ad renders as a full-viewport <iframe title="Advertisement"> that
+    // sits on top of every element on the page and intercepts all clicks.
+    // The dismiss button (div#dismiss-button-element div) lives INSIDE the
+    // iframe — we must switch into the iframe context to reach it.
+    // NOTE: iframe IDs (aswift_1, aswift_2 …) change every page load.
+    //       We locate the iframe by its stable title="Advertisement" attribute.
+    private final By adIframe     = By.cssSelector("iframe[title='Advertisement']");
+    private final By adDismissBtn = By.cssSelector("div#dismiss-button-element div");
+
     // =====================================================================
 
     public LoginPage(ASM_Framework driver) { super(driver); }
@@ -85,6 +96,14 @@ public class LoginPage extends BasePage
                 "//b[text()='Enter Account Information']"));
     }
 
+    /**
+     * Returns true if the 'ACCOUNT CREATED!' heading is visible on the page.
+     *
+     * <p><b>This method ONLY checks visibility — it never clicks anything.</b>
+     * It is used as an assertion checkpoint in {@code registerAndContinue()}
+     * BEFORE the caller decides to proceed with {@code clickContinueAfterCreation()}.
+     * Never add any click or navigation call inside this method.</p>
+     */
     public boolean isAccountCreatedVisible()
     {
         return driver.validateElementIsDisplayed(driver.findElement("xpath",
@@ -171,8 +190,90 @@ public class LoginPage extends BasePage
         driver.clickElement(createAccountBtn);
     }
 
+    // ── Ad dismiss ────────────────────────────────────────────────────────
+
+    /**
+     * Dismisses the Google ad overlay that appears on the 'Account Created!' page.
+     *
+     * <h3>Why this is needed</h3>
+     * <p>After clicking 'Create Account' the site injects a full-viewport ad as
+     * {@code <iframe title="Advertisement" style="width:100vw; height:100vh">}.
+     * This iframe sits on top of the page at z-index and intercepts every click,
+     * which is exactly what causes the {@code ElementClickInterceptedException}
+     * on the 'Continue' button.</p>
+     *
+     * <h3>Why we need to switch into the iframe</h3>
+     * <p>The dismiss button ({@code div#dismiss-button-element div}) lives
+     * <em>inside</em> the ad iframe. Selenium's DOM is scoped to the current
+     * frame context — calling {@code findElement} or {@code clickElement} from
+     * the main page context will never find elements inside a child iframe.</p>
+     *
+     * <h3>Why we use JavaScript click inside the iframe</h3>
+     * <p>After switching into the iframe, the ad content is served from a
+     * Google domain. Selenium's {@code waitForElementToBeClickable} checks
+     * CSS visibility ({@code display}, {@code visibility}, {@code opacity})
+     * on the element — but inside a cross-origin ad iframe those checks can
+     * time out even when the dismiss button is visually rendered. Using
+     * {@code JavascriptExecutor.executeScript("arguments[0].click()")} bypasses
+     * the visibility precondition and fires the click directly on the DOM node,
+     * which is reliable regardless of the ad's CSS state.</p>
+     *
+     * <h3>Flow</h3>
+     * <ol>
+     *   <li>Probe for the ad iframe with a 5 s timeout (fast fail when no ad)</li>
+     *   <li>Switch into the iframe via {@code FrameManager.switchToIFrame(By)}</li>
+     *   <li>Find the dismiss button inside the iframe</li>
+     *   <li>Fire a JavaScript click on it</li>
+     *   <li>{@code finally} — always switch back to default content so all
+     *       subsequent driver calls work on the main page</li>
+     * </ol>
+     */
+    public void dismissAdIfPresent()
+    {
+        try
+        {
+            // Step 1 — probe for the ad iframe from the main page context.
+            // Short 5 s timeout: if no ad loads within 5 s we skip dismiss entirely.
+            driver.findElement("css", "iframe[title='Advertisement']", 20);
+
+            // Step 2 — switch the WebDriver context INTO the ad iframe.
+            // Uses FrameManager.switchToIFrame(By) from the framework.
+            driver.switchToIFrame(adIframe);
+
+            // Step 3 — find the dismiss button inside the iframe and JS-click it.
+            // We use JavascriptExecutor.click() instead of driver.clickElement()
+            // because clickElement() calls waitForElementToBeClickable() which
+            // checks CSS visibility — unreliable inside a cross-origin ad iframe.
+            org.openqa.selenium.WebElement dismissBtn =
+                    driver.findElement("css", "div#dismiss-button-element div");
+            ((JavascriptExecutor) driver.getDriver())
+                    .executeScript("arguments[0].click();", dismissBtn);
+        }
+        catch (Exception ignored)
+        {
+            // Ad iframe not present, already dismissed, or blocked by ad-blocker.
+            // Silently continue — the Continue button will be freely clickable.
+        }
+        finally
+        {
+            // Step 4 — ALWAYS return to default content.
+            // If we leave the context inside the iframe every subsequent
+            // driver call will throw NoSuchElementException on main-page elements.
+            driver.switchToDefaultContent();
+        }
+    }
+
+    /**
+     * Dismisses any ad overlay first, then clicks the 'Continue' button on the
+     * 'Account Created!' confirmation page.
+     *
+     * <p>Always call this instead of clicking 'Continue' directly — the ad
+     * iframe covers 100vw × 100vh and will intercept the click if it has not
+     * been dismissed first.</p>
+     */
     public void clickContinueAfterCreation()
     {
+        dismissAdIfPresent();
         driver.clickElement(continueBtn);
     }
 }

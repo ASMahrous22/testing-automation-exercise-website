@@ -9,7 +9,6 @@ import testdata.UserData;
 import utils.DataReader;
 
 import java.io.IOException;
-import java.util.UUID;
 
 import static utils.AllureHelper.saveScreenshot;
 
@@ -22,6 +21,16 @@ import static utils.AllureHelper.saveScreenshot;
  * <p>Email convention: {@code asm<4-digit-random>@test.com}<br>
  * Valid username: {@code abdallah}</p>
  *
+ * <p><b>Email usage rules:</b></p>
+ * <ul>
+ *   <li>A unique email is generated ONCE per test and stored in {@code u.email}.</li>
+ *   <li>The same {@code u.email} is reused for every step in that test
+ *       (registration AND login) — never regenerated mid-test.</li>
+ *   <li>TC03 uses a hardcoded wrong email on purpose — that IS the negative input.</li>
+ *   <li>TC05 reads a pre-existing email from {@code existingUser.json} on purpose
+ *       — that IS the duplicate-email negative input.</li>
+ * </ul>
+ *
  * @author ASMahrous
  */
 @Epic("User Account Management")
@@ -29,7 +38,11 @@ public class RegisterLoginTests extends BaseTest
 {
     // ── helpers ───────────────────────────────────────────────────────────
 
-    /** Generates a unique email: asm + 4-digit number + @test.com */
+    /**
+     * Generates a fresh unique email for registration: asm + 4-digit number + @test.com.
+     * Call this ONCE at the top of a test and store the result — do not call it again
+     * mid-test or you will get a different email at the login step.
+     */
     private String uniqueEmail()
     {
         int suffix = 1000 + (int)(Math.random() * 9000);
@@ -37,8 +50,26 @@ public class RegisterLoginTests extends BaseTest
     }
 
     /**
-     * Registers a fresh account using the given email, then returns to home.
-     * Shared by TC14, TC15, TC23, TC24 via static helper visibility.
+     * Shared registration helper used by TC02, TC04, and the checkout tests.
+     *
+     * <p>Starting from the home page (already open), this method:</p>
+     * <ol>
+     *   <li>Clicks 'Signup / Login'</li>
+     *   <li>Fills the signup name + email form (step 1)</li>
+     *   <li>Fills the full account information form (step 2)</li>
+     *   <li>Dismisses the ad overlay on the 'Account Created!' page if present</li>
+     *   <li>Clicks 'Continue' — the site then auto-logs the user in</li>
+     * </ol>
+     *
+     * <p><b>Do NOT call {@code home.clickSignupLogin()} before this</b> — that
+     * click is performed internally here and calling it again would navigate
+     * to the wrong page.</p>
+     *
+     * @param home  the HomePage instance (already on automationexercise.com)
+     * @param login the LoginPage instance
+     * @param u     UserData with {@code u.email} already set to the unique email
+     *              for this run — this value must NOT be regenerated after calling
+     *              this method
      */
     static void registerAndContinue(HomePage home, LoginPage login, UserData u)
     {
@@ -60,13 +91,18 @@ public class RegisterLoginTests extends BaseTest
 
     @Test(groups = "registration-login")
     @Story("Register User")
-    @Description("TC01 — Register a brand-new user, verify account created, then delete the account.")
+    @Description("TC01 — Register a brand-new user with a unique email, verify 'ACCOUNT CREATED!', "
+            + "verify logged-in navbar, then delete the account.")
     @Severity(SeverityLevel.CRITICAL)
     public void TC01_registerNewUser() throws IOException
     {
-        UserData u    = DataReader.read("user.json", UserData.class);
-        u.email       = uniqueEmail();   // always fresh
-        u.name        = "abdallah";
+        // uniqueEmail() called ONCE — used ONLY for registration.
+        // TC01 has NO separate login step at all; the site automatically logs the
+        // user in after clicking 'Continue' on the 'Account Created!' page.
+        // The email is never reused for a login call anywhere in this test.
+        UserData u = DataReader.read("user.json", UserData.class);
+        u.email    = uniqueEmail();
+        u.name     = "abdallah";
 
         HomePage  home  = new HomePage(getDriver());
         LoginPage login = new LoginPage(getDriver());
@@ -86,8 +122,9 @@ public class RegisterLoginTests extends BaseTest
         Assert.assertTrue(login.isAccountCreatedVisible(),
                 "'ACCOUNT CREATED!' should be visible");
 
+        // Continue — site auto-logs in; no separate login step needed
         login.clickContinueAfterCreation();
-        Assert.assertTrue(home.getLoggedInUsername().equalsIgnoreCase("abdallah"),
+        Assert.assertTrue(home.getLoggedInUsername().toLowerCase().contains("abdallah"),
                 "'Logged in as abdallah' should appear in navbar");
 
         saveScreenshot("TC01_LoggedIn", getDriver());
@@ -104,14 +141,20 @@ public class RegisterLoginTests extends BaseTest
 
     @Test(groups = "registration-login")
     @Story("Login User")
-    @Description("TC02 — Login with valid email & password, verify logged-in state, then delete account.")
+    @Description("TC02 — Register with a unique email, log out, then log back in with "
+            + "the SAME email and password to verify login works.")
     @Severity(SeverityLevel.CRITICAL)
     public void TC02_loginWithValidCredentials() throws IOException
     {
-        // First register so we have a fresh account to delete after
-        UserData u    = DataReader.read("user.json", UserData.class);
-        u.email       = uniqueEmail();
-        u.name        = "abdallah";
+        // uniqueEmail() is called ONCE here, at the top, and stored in u.email.
+        // That single value is used for BOTH steps:
+        //   Step 1 — register a new account with u.email
+        //   Step 2 — log in with that exact same u.email
+        // uniqueEmail() is NOT called again before the login step;
+        // doing so would generate a different address and login would fail.
+        UserData u = DataReader.read("user.json", UserData.class);
+        u.email    = uniqueEmail();
+        u.name     = "abdallah";
 
         HomePage  home  = new HomePage(getDriver());
         LoginPage login = new LoginPage(getDriver());
@@ -119,17 +162,21 @@ public class RegisterLoginTests extends BaseTest
         home.open();
         Assert.assertTrue(home.isHomePageVisible(), "Home page should be visible");
 
-        // Register
+        // Step 1 — Register (creates the account we will test login against).
+        // registerAndContinue handles clickSignupLogin + both signup steps +
+        // dismissing the ad overlay + clicking Continue internally.
         registerAndContinue(home, login, u);
         home.clickLogout();
 
-        // Now login with the same credentials
+        // Step 2 — Login using the SAME u.email that was just registered above.
+        // Do NOT generate a new email here — u.email is already set and is the
+        // only valid credential that exists for this run.
         home.clickSignupLogin();
         Assert.assertTrue(login.isLoginHeadingVisible(),
                 "'Login to your account' should be visible");
 
-        login.loginWith(u.email, u.password);
-        Assert.assertTrue(home.getLoggedInUsername().equalsIgnoreCase("abdallah"),
+        login.loginWith(u.email, u.password);   // ← reuses the registration email, not a new one
+        Assert.assertTrue(home.getLoggedInUsername().toLowerCase().contains("abdallah"),
                 "'Logged in as abdallah' should appear after login");
 
         saveScreenshot("TC02_LoggedIn", getDriver());
@@ -146,10 +193,14 @@ public class RegisterLoginTests extends BaseTest
 
     @Test(groups = "registration-login")
     @Story("Login User")
-    @Description("TC03 — Attempt login with wrong email & password; verify error message.")
+    @Description("TC03 — Attempt login with a wrong email and wrong password; "
+            + "verify the error message 'Your email or password is incorrect!'")
     @Severity(SeverityLevel.NORMAL)
     public void TC03_loginWithInvalidCredentials()
     {
+        // No registration needed — we deliberately use credentials that do not
+        // belong to any account. The hardcoded wrong email is intentional here;
+        // this is a negative test, not a registration test.
         HomePage  home  = new HomePage(getDriver());
         LoginPage login = new LoginPage(getDriver());
 
@@ -171,27 +222,36 @@ public class RegisterLoginTests extends BaseTest
 
     @Test(groups = "registration-login")
     @Story("Logout User")
-    @Description("TC04 — Login, then logout and verify redirect to login page.")
+    @Description("TC04 — Register with a unique email (auto-logs in), then click Logout "
+            + "and verify the browser redirects to the login page.")
     @Severity(SeverityLevel.NORMAL)
     public void TC04_logoutUser() throws IOException
     {
-        UserData u  = DataReader.read("user.json", UserData.class);
-        u.email     = uniqueEmail();
-        u.name      = "abdallah";
+        // uniqueEmail() called ONCE — used ONLY for registration.
+        // TC04 has NO separate login step. After registration the site auto-logs
+        // the user in, and we immediately test the logout from that session.
+        // The email is never passed to loginWith() anywhere in this test.
+        UserData u = DataReader.read("user.json", UserData.class);
+        u.email    = uniqueEmail();
+        u.name     = "abdallah";
 
         HomePage  home  = new HomePage(getDriver());
         LoginPage login = new LoginPage(getDriver());
 
         home.open();
-        home.clickSignupLogin();
+        Assert.assertTrue(home.isHomePageVisible(), "Home page should be visible");
+
+        // registerAndContinue handles clickSignupLogin + both signup steps +
+        // ad dismiss + Continue internally — do NOT call home.clickSignupLogin()
+        // before this; that would cause a double-click and break the flow.
         registerAndContinue(home, login, u);
 
-        Assert.assertTrue(home.getLoggedInUsername().equalsIgnoreCase("abdallah"),
-                "User should be logged in before logout test");
+        Assert.assertTrue(home.getLoggedInUsername().toLowerCase().contains("abdallah"),
+                "User should be logged in as abdallah before testing logout");
 
         home.clickLogout();
         Assert.assertTrue(login.urlContains("login"),
-                "User should be redirected to login page after logout");
+                "User should be redirected to /login after clicking Logout");
     }
 
     // =====================================================================
@@ -200,10 +260,13 @@ public class RegisterLoginTests extends BaseTest
 
     @Test(groups = "registration-login")
     @Story("Register User")
-    @Description("TC05 — Attempt signup with an already-registered email; verify error message.")
+    @Description("TC05 — Attempt signup using the email from existingUser.json (already registered); "
+            + "verify error 'Email Address already exist!'")
     @Severity(SeverityLevel.NORMAL)
     public void TC05_registerWithExistingEmail() throws IOException
     {
+        // No uniqueEmail() here — we intentionally use the pre-existing email
+        // from existingUser.json to trigger the duplicate-email error.
         UserData existing = DataReader.read("existingUser.json", UserData.class);
 
         HomePage  home  = new HomePage(getDriver());
@@ -227,7 +290,8 @@ public class RegisterLoginTests extends BaseTest
 
     @Test(groups = "registration-login")
     @Story("Login User")
-    @Description("NEGATIVE TC-N01 — Submit login form with both fields empty; error should be shown.")
+    @Description("NEGATIVE TC-N01 — Submit login form with both fields empty; "
+            + "HTML5 validation or server error must prevent login.")
     @Severity(SeverityLevel.MINOR)
     public void NEGATIVE_TC_N01_loginWithEmptyCredentials()
     {
@@ -240,10 +304,8 @@ public class RegisterLoginTests extends BaseTest
                 "'Login to your account' should be visible");
 
         login.loginWith("", "");
-        // Either an HTML5 validation prevents submit, or the server returns an error.
-        // Either way we must NOT land on the home page.
         Assert.assertFalse(home.isLoggedIn(),
-                "User must NOT be logged in when credentials are empty");
+                "User must NOT be logged in when both email and password are empty");
     }
 
     // =====================================================================
@@ -252,7 +314,8 @@ public class RegisterLoginTests extends BaseTest
 
     @Test(groups = "registration-login")
     @Story("Register User")
-    @Description("NEGATIVE TC-N02 — Attempt signup with a malformed email address; form should reject it.")
+    @Description("NEGATIVE TC-N02 — Attempt signup with a malformed email (no @ or domain); "
+            + "HTML5 validation should block the form and keep the user on /login.")
     @Severity(SeverityLevel.MINOR)
     public void NEGATIVE_TC_N02_registerWithInvalidEmailFormat()
     {
@@ -264,11 +327,11 @@ public class RegisterLoginTests extends BaseTest
         Assert.assertTrue(login.isSignupHeadingVisible(),
                 "'New User Signup!' should be visible");
 
-        // Malformed email — no domain
+        // Malformed email — no @ symbol, no domain
         login.fillSignupForm("abdallah", "notAnEmail");
 
-        // HTML5 validation should block the form; we must still be on /login
+        // HTML5 email validation must block the form; page must stay on /login
         Assert.assertTrue(login.urlContains("login"),
-                "Page should stay on /login when signup email is invalid");
+                "Page should stay on /login when signup email format is invalid");
     }
 }

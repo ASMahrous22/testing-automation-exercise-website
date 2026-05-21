@@ -100,32 +100,38 @@ public class HomePage extends BasePage
      * "Logged in as ", so callers should use {@code contains()} or
      * {@code endsWith()} to check just the name.</p>
      *
-     * <p>Tries CSS first; falls back to XPath if the CSS wait times out,
-     * which can happen when the page is slow to render the navbar.</p>
+     * <p>Uses a 20-second timeout to accommodate post-registration redirect
+     * delays and any lingering ad overlays. Tries CSS first; falls back to
+     * XPath if the CSS wait times out.</p>
      */
     public String getLoggedInUsername()
     {
+        // 20s timeout — the page may still be navigating after ad dismiss + Continue
         try
         {
-            return driver.getElementText(loggedInLabel).trim();
+            return driver.findElement("css", "a[href='/account_info'] b", 20)
+                    .getText()
+                    .trim();
         }
         catch (Exception e)
         {
             // Fallback — identical element, different locator strategy
-            return driver.getElementText(loggedInLabelXP).trim();
+            return driver.findElement("xpath", "//a[@href='/account_info']/b", 20)
+                    .getText()
+                    .trim();
         }
     }
 
     /**
      * Returns {@code true} if the logged-in navbar label is present in the DOM.
-     * Uses a short 3-second timeout so the check is fast when the user is
+     * Uses a short 5-second timeout so the check is fast when the user is
      * NOT logged in.
      */
     public boolean isLoggedIn()
     {
         try
         {
-            driver.findElement("css", "a[href='/account_info'] b", 3);
+            driver.findElement("css", "a[href='/account_info'] b", 5);
             return true;
         }
         catch (Exception e) { return false; }

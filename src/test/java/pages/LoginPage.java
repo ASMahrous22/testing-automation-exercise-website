@@ -230,37 +230,54 @@ public class LoginPage extends BasePage
      */
     public void dismissAdIfPresent()
     {
-        try
-        {
-            // Step 1 — probe for the ad iframe from the main page context.
-            // Short 5 s timeout: if no ad loads within 5 s we skip dismiss entirely.
-            driver.findElement("css", "iframe[title='Advertisement']", 20);
+        // How this works
+        // ──────────────
+        // The Google ad renders as one or more <iframe> elements that cover the
+        // full viewport. The dismiss button (div#dismiss-button-element div) lives
+        // INSIDE one of those iframes.
+        //
+        // switchToIFrame(By) calls waitForElementToBeVisible() internally, which
+        // is unreliable for cross-origin ad iframes whose CSS state fluctuates
+        // while loading. Instead we iterate by index (switchToIFrameByIndex),
+        // which uses browser.switchTo().frame(int) directly — no visibility check,
+        // no timeout risk.
+        //
+        // We try each iframe in order, look for the dismiss button, JS-click it,
+        // then break. switchToDefaultContent() in the finally block guarantees
+        // the driver always returns to the main page context.
 
-            // Step 2 — switch the WebDriver context INTO the ad iframe.
-            // Uses FrameManager.switchToIFrame(By) from the framework.
-            driver.switchToIFrame(adIframe);
+        int iframeCount = driver.getDriver()
+                .findElements(org.openqa.selenium.By.tagName("iframe")).size();
 
-            // Step 3 — find the dismiss button inside the iframe and JS-click it.
-            // We use JavascriptExecutor.click() instead of driver.clickElement()
-            // because clickElement() calls waitForElementToBeClickable() which
-            // checks CSS visibility — unreliable inside a cross-origin ad iframe.
-            org.openqa.selenium.WebElement dismissBtn =
-                    driver.findElement("css", "div#dismiss-button-element div");
-            ((JavascriptExecutor) driver.getDriver())
-                    .executeScript("arguments[0].click();", dismissBtn);
-        }
-        catch (Exception ignored)
+        for (int i = 0; i < iframeCount; i++)
         {
-            // Ad iframe not present, already dismissed, or blocked by ad-blocker.
-            // Silently continue — the Continue button will be freely clickable.
+            try
+            {
+                // Switch into iframe i — no visibility wait, no timeout risk.
+                driver.switchToIFrameByIndex(i);
+
+                // Try to find the dismiss button inside this iframe.
+                // findElement with 2 s timeout: fast fail if this isn't the ad iframe.
+                driver.findElement("css", "div#dismiss-button-element div", 2);
+
+                // Found it — JS-click bypasses all CSS visibility checks.
+                org.openqa.selenium.WebElement dismissBtn =
+                        driver.findElement("css", "div#dismiss-button-element div");
+                ((JavascriptExecutor) driver.getDriver())
+                        .executeScript("arguments[0].click();", dismissBtn);
+
+                // Dismiss done — return to main page and stop searching.
+                driver.switchToDefaultContent();
+                return;
+            }
+            catch (Exception ignored)
+            {
+                // This iframe didn't contain the dismiss button — switch back
+                // to default content and try the next one.
+                driver.switchToDefaultContent();
+            }
         }
-        finally
-        {
-            // Step 4 — ALWAYS return to default content.
-            // If we leave the context inside the iframe every subsequent
-            // driver call will throw NoSuchElementException on main-page elements.
-            driver.switchToDefaultContent();
-        }
+        // No ad iframe found — nothing to dismiss, continue normally.
     }
 
     /**
@@ -275,5 +292,12 @@ public class LoginPage extends BasePage
     {
         dismissAdIfPresent();
         driver.clickElement(continueBtn);
+
+        // Wait until the browser has navigated back to the home page.
+        // The logged-in navbar label only appears after this redirect completes.
+        // Without this wait, getLoggedInUsername() runs while the page is still
+        // transitioning and finds no element, causing a TimeoutException.
+        driver.setExplicitWait(By.cssSelector("a[href='/account_info'] b"), 15);
+        dismissAdIfPresent();
     }
 }

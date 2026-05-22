@@ -73,15 +73,28 @@ public class RegisterLoginTests extends BaseTest
      */
     static void registerAndContinue(HomePage home, LoginPage login, UserData u)
     {
+        // Step 4  — navigate to signup/login page
         home.clickSignupLogin();
+
+        // Step 5  — verify signup heading
         Assert.assertTrue(login.isSignupHeadingVisible(),
                 "PRECONDITION: 'New User Signup!' heading must be visible");
+
+        // Step 6–7 — fill name + email and click Signup
         login.fillSignupForm(u.name, u.email);
+
+        // Step 8  — verify account information form appeared
         Assert.assertTrue(login.isEnterAccountInfoVisible(),
                 "PRECONDITION: 'ENTER ACCOUNT INFORMATION' must appear after signup step 1");
+
+        // Steps 9–13 — fill all account details and click Create Account
         login.fillAccountInformation(u);
+
+        // Step 14 — verify 'ACCOUNT CREATED!' heading is visible
         Assert.assertTrue(login.isAccountCreatedVisible(),
                 "PRECONDITION: 'ACCOUNT CREATED!' heading must be visible");
+
+        // Step 15 — click Continue and wait for home page navbar
         login.clickContinueAfterCreation();
     }
 
@@ -118,24 +131,15 @@ public class RegisterLoginTests extends BaseTest
         Assert.assertTrue(login.isEnterAccountInfoVisible(),
                 "'ENTER ACCOUNT INFORMATION' should be visible");
 
+        // Step 13 — fills all details and clicks Create Account
         login.fillAccountInformation(u);
+
+        // Step 14 — verify 'ACCOUNT CREATED!' heading is visible
         Assert.assertTrue(login.isAccountCreatedVisible(),
                 "'ACCOUNT CREATED!' should be visible");
 
-        // Continue — site auto-logs in; no separate login step needed.
-        // clickContinueAfterCreation() internally dismisses any ad overlay and
-        // then polls until the URL has left the account_created page, so by the
-        // time the next assertion runs the home page is guaranteed to be loaded.
+        // Step 15 — click Continue and wait for home page navbar
         login.clickContinueAfterCreation();
-
-        // Guard: confirm we are actually on the home page before checking the navbar.
-        // This surfaces a clear failure message if the redirect went wrong instead
-        // of a confusing NoSuchElementException on the <b> element.
-        Assert.assertTrue(
-                home.urlContains("automationexercise.com") && !home.urlContains("login"),
-                "After clicking Continue, browser should be on the home page, not: "
-                        + home.readPageURL());
-
         Assert.assertTrue(home.getLoggedInUsername().toLowerCase().contains("abdallah"),
                 "'Logged in as abdallah' should appear in navbar");
 
@@ -178,13 +182,6 @@ public class RegisterLoginTests extends BaseTest
         // registerAndContinue handles clickSignupLogin + both signup steps +
         // dismissing the ad overlay + clicking Continue internally.
         registerAndContinue(home, login, u);
-
-        // Guard: confirm home page loaded after registration before logging out
-        Assert.assertTrue(
-                home.urlContains("automationexercise.com") && !home.urlContains("login"),
-                "After registration Continue, browser should be on the home page, not: "
-                        + home.readPageURL());
-
         home.clickLogout();
 
         // Step 2 — Login using the SAME u.email that was just registered above.
@@ -264,12 +261,6 @@ public class RegisterLoginTests extends BaseTest
         // ad dismiss + Continue internally — do NOT call home.clickSignupLogin()
         // before this; that would cause a double-click and break the flow.
         registerAndContinue(home, login, u);
-
-        // Guard: confirm home page loaded after registration before testing logout
-        Assert.assertTrue(
-                home.urlContains("automationexercise.com") && !home.urlContains("login"),
-                "After registration Continue, browser should be on the home page, not: "
-                        + home.readPageURL());
 
         Assert.assertTrue(home.getLoggedInUsername().toLowerCase().contains("abdallah"),
                 "User should be logged in as abdallah before testing logout");

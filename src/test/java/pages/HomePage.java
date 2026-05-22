@@ -109,14 +109,14 @@ public class HomePage extends BasePage
         // 20s timeout — the page may still be navigating after ad dismiss + Continue
         try
         {
-            return driver.findElement("css", "a[href='/account_info'] b", 20)
+            return driver.findElement("xpath","//a[contains(.,'Logged in as')]/b", 10)
                     .getText()
                     .trim();
         }
         catch (Exception e)
         {
             // Fallback — identical element, different locator strategy
-            return driver.findElement("xpath", "//a[@href='/account_info']/b", 20)
+            return driver.findElement("xpath", "//a[contains(.,'Logged in as')]/b", 20)
                     .getText()
                     .trim();
         }
@@ -131,7 +131,7 @@ public class HomePage extends BasePage
     {
         try
         {
-            driver.findElement("css", "a[href='/account_info'] b", 5);
+            driver.findElement("xpath", "//a[contains(.,'Logged in as')]", 5);
             return true;
         }
         catch (Exception e) { return false; }
@@ -145,7 +145,12 @@ public class HomePage extends BasePage
                 .equalsIgnoreCase("Account Deleted!");
     }
 
-    public void clickContinueAfterDeletion() { driver.clickElement(continueBtn); }
+    public void clickContinueAfterDeletion()
+    {
+        // Ads often appear after clicking 'Delete Account'
+        dismissAdIfPresent();
+        driver.clickElement(continueBtn);
+    }
 
     // ── Footer subscription ───────────────────────────────────────────────
 

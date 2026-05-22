@@ -1,9 +1,13 @@
 package pages;
 
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebElement;
 import utils.ASM_Framework;
 import utils.AllureHelper;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * BasePage — Parent class for all Page Object Model page classes.
@@ -146,5 +150,85 @@ public class BasePage
     public void saveScreenshot(String fileName, ASM_Framework driver) throws IOException
     {
         AllureHelper.saveScreenshot(fileName, driver);
+    }
+
+    /**
+     * Dismisses any full‑screen iframe ad overlay that is currently covering the page.
+     *
+     * <p>The method loops through every {@code <iframe>} on the page, switches into it,
+     * looks for common "close" / "dismiss" buttons, clicks the first one it finds via
+     * JavaScript, and then switches back to the main page content.  It uses the
+     * framework's own {@code WaitManager} for timeouts </b>.</p>
+     *
+     * <p>If no ad is present the method returns {@code false} without throwing.</p>
+     *
+     * @return {@code true} if an ad was found and dismissed; {@code false} otherwise
+     */
+    public boolean dismissAdIfPresent()
+    {
+        // Snapshot whatever iframes are already in the DOM right now — zero wait.
+        // If there are none we return false immediately without blocking at all.
+        List<WebElement> iframes = driver.getDriver().findElements(By.tagName("iframe"));
+
+        if (iframes.isEmpty())
+        {
+            return false;
+        }
+
+        for (int i = 0; i < iframes.size(); i++)
+        {
+            try
+            {
+                driver.switchToIFrameByIndex(i);
+
+                // Exact selectors confirmed from DevTools on automationexercise.com/account_created
+                // Structure inside the ad iframe:
+                //   div#dismiss-button (aria-label="Close ad")
+                //     div#dismiss-button-element.close-button
+                //       div.continue-prompt-text  ← contains "Close" text — this is what we click
+                String[] closeSelectors = {
+                        "div#dismiss-button-element div.continue-prompt-text",
+                        "div#dismiss-button-element div",
+                        "div#dismiss-button-element",
+                        "div#dismiss-button",
+                        "div[aria-label='Close ad']",
+                        "div[id*='dismiss']",
+                        "button[id*='dismiss']",
+                        "div[aria-label='Close']",
+                        "button[aria-label='Close']",
+                        "button[id*='close']"
+                };
+
+                for (String css : closeSelectors)
+                {
+                    try
+                    {
+                        WebElement closeBtn = driver.findElement("css", css, 2);
+
+                        if (closeBtn != null && closeBtn.isDisplayed())
+                        {
+                            JavascriptExecutor js = (JavascriptExecutor) driver.getDriver();
+                            js.executeScript("arguments[0].click();", closeBtn);
+                            driver.switchToDefaultContent();
+
+                            // Give the overlay a moment to vanish from the DOM
+                            try { driver.setExplicitWait(By.tagName("body"), 5); }
+                            catch (Exception ignored) {}
+
+                            return true;
+                        }
+                    }
+                    catch (Exception ignored) { /* try next selector */ }
+                }
+
+                driver.switchToDefaultContent();
+            }
+            catch (Exception e)
+            {
+                try { driver.switchToDefaultContent(); } catch (Exception ignored) {}
+            }
+        }
+
+        return false;
     }
 }

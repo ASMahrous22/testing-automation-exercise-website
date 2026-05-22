@@ -212,7 +212,7 @@ public class LoginPage extends BasePage
         // Wait for the logged-in navbar label — confirms the redirect to home
         // completed. getLoggedInUsername() is called immediately after this.
         driver.setExplicitWait(
-                By.xpath("//a[contains(.,'Logged in as')]"), 10);
+                By.xpath("//a[contains(.,'Logged in as')]"), 15);
     }
 
 }

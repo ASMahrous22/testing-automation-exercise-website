@@ -11,16 +11,16 @@ public class UserData
 {
     // ── Identity ──────────────────────────────────────────────────────────
     public String title;           // "Mr" | "Mrs"
-    public String name;
+    public String name;            // full display name shown in navbar
     public String firstName;
     public String lastName;
     public String email;
     public String password;
 
     // ── Date of Birth ─────────────────────────────────────────────────────
-    public String dayOfBirth;
-    public String monthOfBirth;
-    public String yearOfBirth;
+    public String dayOfBirth;      // e.g. "15"
+    public String monthOfBirth;    // e.g. "June"
+    public String yearOfBirth;     // e.g. "1990"
 
     // ── Address ───────────────────────────────────────────────────────────
     public String company;

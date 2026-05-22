@@ -95,31 +95,18 @@ public class HomePage extends BasePage
      * Returns the username text from the logged-in navbar label.
      *
      * <p>The site renders {@code <a href="/account_info"><b> Logged in as NAME</b></a>}.
-     * We target the {@code <b>} element directly and strip leading/trailing
-     * whitespace. The returned string contains the full text including
-     * "Logged in as ", so callers should use {@code contains()} or
-     * {@code endsWith()} to check just the name.</p>
+     * The returned string contains the full text "Logged in as NAME", so callers
+     * should use {@code contains()} to check just the name.</p>
      *
-     * <p>Uses a 20-second timeout to accommodate post-registration redirect
-     * delays and any lingering ad overlays. Tries CSS first; falls back to
-     * XPath if the CSS wait times out.</p>
+     * <p>By the time this is called, {@code clickContinueAfterCreation()} has
+     * already waited for this exact element to be present — so the default
+     * 10-second timeout on {@code findElement} is more than enough.</p>
      */
     public String getLoggedInUsername()
     {
-        // 20s timeout — the page may still be navigating after ad dismiss + Continue
-        try
-        {
-            return driver.findElement("xpath","//a[contains(.,'Logged in as')]/b", 10)
-                    .getText()
-                    .trim();
-        }
-        catch (Exception e)
-        {
-            // Fallback — identical element, different locator strategy
-            return driver.findElement("xpath", "//a[contains(.,'Logged in as')]/b", 20)
-                    .getText()
-                    .trim();
-        }
+        return driver.findElement("xpath", "//a[contains(.,'Logged in as')]/b")
+                .getText()
+                .trim();
     }
 
     /**

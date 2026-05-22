@@ -1,0 +1,7 @@
+{
+  "name":     "abdallah",
+  "email":    "asm6204@test.com",
+  "subject":  "Test Automation Inquiry",
+  "message":  "This is an automated test message sent by the Selenium test suite.",
+  "filePath": "src/test/resources/testdata/upload_sample.txt"
+}

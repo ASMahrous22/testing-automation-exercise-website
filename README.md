@@ -933,7 +933,7 @@ loginPage.saveScreenshot("TC01_AfterLogin", getDriver());
 
 ## Author
 
-**ASMahrous** — EDGES Software Testing Diploma · Automation Final Project
+**ASMahrous** — EDGES Software Testing Diploma · Web Automation Final Project
 
 Website under test: [automationexercise.com](https://automationexercise.com) ·
 Test cases spec: [automationexercise.com/test_cases](https://automationexercise.com/test_cases)

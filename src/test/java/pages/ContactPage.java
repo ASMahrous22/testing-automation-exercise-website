@@ -2,15 +2,10 @@ package pages;
 
 import org.openqa.selenium.By;
 import utils.ASM_Framework;
-
 import java.io.File;
 
 /**
- * ContactPage — Represents the /contact_us page.
- *
- * <p>Covers: TC06.</p>
- *
- * @author ASMahrous
+ * ContactPage — /contact_us page. Covers TC06.
  */
 public class ContactPage extends BasePage
 {
@@ -24,8 +19,6 @@ public class ContactPage extends BasePage
     private final By successMessage    = By.cssSelector(".status.alert.alert-success");
     private final By homeButton        = By.cssSelector(".btn.btn-success");
 
-    // =====================================================================
-
     public ContactPage(ASM_Framework driver) { super(driver); }
     public ContactPage(String browserName)  { super(browserName); }
 
@@ -33,49 +26,33 @@ public class ContactPage extends BasePage
 
     public boolean isGetInTouchVisible()
     {
-        return driver.validateElementIsDisplayed(
-                driver.findElement("xpath", "//h2[text()='Get In Touch']"));
+        waitFor(getInTouchHeading);
+        return wd().findElement(getInTouchHeading).isDisplayed();
     }
 
     public void fillContactForm(String name, String email, String subject, String message)
     {
+        killAds();
         driver.writeInElement(nameField,    name);
         driver.writeInElement(emailField,   email);
         driver.writeInElement(subjectField, subject);
         driver.writeInElement(messageField, message);
     }
 
-    /**
-     * Uploads a file via the hidden file input.
-     * The path is resolved to an absolute path so Selenium can locate it.
-     *
-     * @param relativePath path relative to the project root
-     *                     (e.g. "src/test/resources/testdata/upload_sample.txt")
-     */
     public void uploadFile(String relativePath)
     {
-        String absolutePath = System.getProperty("user.dir")
-                + File.separator + relativePath;
-        driver.findElement("name", "upload_file").sendKeys(absolutePath);
+        String absolutePath = System.getProperty("user.dir") + File.separator + relativePath;
+        wd().findElement(uploadFileInput).sendKeys(absolutePath);
     }
 
-    public void clickSubmit()
-    {
-        driver.clickElement(submitButton);
-    }
-
-    public void acceptConfirmationAlert()
-    {
-        driver.acceptAlert();
-    }
+    public void clickSubmit()             { safeClick(submitButton); }
+    public void acceptConfirmationAlert() { driver.acceptAlert(); }
 
     public String getSuccessMessageText()
     {
-        return driver.getElementText(successMessage);
+        waitFor(successMessage);
+        return wd().findElement(successMessage).getText();
     }
 
-    public void clickHomeButton()
-    {
-        driver.clickElement(homeButton);
-    }
+    public void clickHomeButton()         { jsClick(homeButton); }
 }

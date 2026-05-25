@@ -1,38 +1,33 @@
 package pages;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import utils.ASM_Framework;
 
 /**
- * HomePage — Represents the AutomationExercise home page.
- *
- * <p>Covers: home-page visibility checks, navigation bar links,
- * footer subscription widget, recommended items section, and
- * scroll-up arrow button (TC10, TC22, TC25, TC26).</p>
- *
- * @author ASMahrous
+ * HomePage — automationexercise.com home page.
+ * All clicks go through jsClick() / safeClick() so ads never block them.
  */
 public class HomePage extends BasePage
 {
-    // ── Navigation bar ────────────────────────────────────────────────────
-    private final By signupLoginLink   = By.cssSelector("a[href='/login']");
-    private final By logoutLink        = By.cssSelector("a[href='/logout']");
-    private final By deleteAccountLink = By.cssSelector("a[href='/delete_account']");
+    // ── Navbar ────────────────────────────────────────────────────────────
+    private final By signupLoginLink   = By.linkText("Signup / Login");
+    private final By logoutLink        = By.linkText("Logout");
+    private final By deleteAccountLink = By.linkText("Delete Account");
     private final By productsLink      = By.cssSelector("a[href='/products']");
     private final By cartLink          = By.cssSelector("a[href='/view_cart']");
     private final By testCasesLink     = By.cssSelector("a[href='/test_cases']");
     private final By contactUsLink     = By.cssSelector("a[href='/contact_us']");
 
-    // ── Logged-in navbar label ─────────────────────────────────────────────
-    // After login the site renders:
-    //   <li><a href="/account_info"><b> Logged in as abdallah</b></a></li>
-    // The text lives inside the <b> child — we target the <b> directly.
-    // Two locators kept for resilience: CSS is the primary, XPath is the fallback.
-    private final By loggedInLabel     = By.cssSelector("a[href='/account_info'] b");
-    private final By loggedInLabelXP   = By.xpath("//a[@href='/account_info']/b");
+    // ── Home-page visibility ──────────────────────────────────────────────
+    private final By homeLogo          = By.cssSelector("img[alt='Website for automation practice']");
 
-    // ── Home page hero ────────────────────────────────────────────────────
-    private final By heroText          = By.cssSelector(".active .item h2");
+    // ── Logged-in label ───────────────────────────────────────────────────
+    private final By loggedInLabel     = By.xpath("//a[contains(.,'Logged in as')]");
+
+    // ── Account Deleted ───────────────────────────────────────────────────
+    private final By accountDeletedHeading = By.xpath("//b[contains(text(),'Account Deleted!')]");
+    private final By continueBtn           = By.cssSelector("a[data-qa='continue-button']");
 
     // ── Footer subscription ───────────────────────────────────────────────
     private final By subscriptionHeading = By.xpath("//h2[text()='Subscription']");
@@ -48,6 +43,9 @@ public class HomePage extends BasePage
     // ── Scroll-up arrow ───────────────────────────────────────────────────
     private final By scrollUpArrow = By.id("scrollUp");
 
+    // ── Hero text ─────────────────────────────────────────────────────────
+    private final By heroText = By.cssSelector(".active .item h2");
+
     // ── Category sidebar ──────────────────────────────────────────────────
     private final By categorySidebar   = By.cssSelector(".left-sidebar");
     private final By womenCategoryLink = By.xpath("//a[@href='#Women']");
@@ -56,87 +54,66 @@ public class HomePage extends BasePage
     private final By menTshirtLink     = By.xpath("//div[@id='Men']//a[contains(@href,'tshirts')]");
     private final By categoryPageHeading = By.cssSelector(".title.text-center");
 
-    // ── Product quick-view on homepage ────────────────────────────────────
+    // ── First product on home page ────────────────────────────────────────
     private final By firstViewProductLink = By.xpath(
             "(//div[@class='productinfo text-center']//a[@href])[1]");
-
-    // ── Account deleted ───────────────────────────────────────────────────
-    private final By accountDeletedHeading = By.xpath("//h2[@data-qa='account-deleted']");
-    private final By continueBtn           = By.xpath("//a[@data-qa='continue-button']");
 
     // =====================================================================
 
     public HomePage(ASM_Framework driver) { super(driver); }
     public HomePage(String browserName)  { super(browserName); }
 
-    // ── Navigation ────────────────────────────────────────────────────────
+    public void open() { driver.goToURL("https://automationexercise.com"); }
 
-    public void open()
-    {
-        driver.goToURL("https://automationexercise.com");
-    }
+    // ── Visibility ────────────────────────────────────────────────────────
 
     public boolean isHomePageVisible()
     {
-        return driver.getCurrentPageURL().contains("automationexercise.com");
+        waitFor(homeLogo);
+        return wd().findElement(homeLogo).isDisplayed();
     }
 
-    public void clickSignupLogin()   { driver.clickElement(signupLoginLink); }
-    public void clickLogout()        { driver.clickElement(logoutLink); }
-    public void clickDeleteAccount() { driver.clickElement(deleteAccountLink); }
-    public void clickProducts()      { driver.clickElement(productsLink); }
-    public void clickCart()          { driver.clickElement(cartLink); }
-    public void clickTestCases()     { driver.clickElement(testCasesLink); }
-    public void clickContactUs()     { driver.clickElement(contactUsLink); }
+    // ── Navbar actions — always jsClick ───────────────────────────────────
+
+    public void clickSignupLogin()   { jsClick(signupLoginLink); }
+    public void clickLogout()        { jsClick(logoutLink); }
+    public void clickDeleteAccount() { jsClick(deleteAccountLink); }
+    public void clickProducts()      { jsClick(productsLink); }
+    public void clickCart()          { jsClick(cartLink); }
+    public void clickTestCases()     { jsClick(testCasesLink); }
+    public void clickContactUs()     { jsClick(contactUsLink); }
 
     // ── Logged-in state ───────────────────────────────────────────────────
 
-    /**
-     * Returns the username text from the logged-in navbar label.
-     *
-     * <p>The site renders {@code <a href="/account_info"><b> Logged in as NAME</b></a>}.
-     * The returned string contains the full text "Logged in as NAME", so callers
-     * should use {@code contains()} to check just the name.</p>
-     *
-     * <p>By the time this is called, {@code clickContinueAfterCreation()} has
-     * already waited for this exact element to be present — so the default
-     * 10-second timeout on {@code findElement} is more than enough.</p>
-     */
     public String getLoggedInUsername()
     {
-        return driver.findElement("xpath", "//a[contains(.,'Logged in as')]/b")
-                .getText()
-                .trim();
+        waitFor(loggedInLabel);
+        return wd().findElement(By.xpath("//a[contains(.,'Logged in as')]/b"))
+                .getText().trim();
     }
 
-    /**
-     * Returns {@code true} if the logged-in navbar label is present in the DOM.
-     * Uses a short 5-second timeout so the check is fast when the user is
-     * NOT logged in.
-     */
     public boolean isLoggedIn()
     {
         try
         {
-            driver.findElement("xpath", "//a[contains(.,'Logged in as')]", 5);
-            return true;
+            killAds();
+            driver.setExplicitWait(loggedInLabel, 5);
+            return wd().findElement(loggedInLabel).isDisplayed();
         }
         catch (Exception e) { return false; }
     }
 
-    // ── Account Deleted confirmation ──────────────────────────────────────
+    // ── Account Deleted ───────────────────────────────────────────────────
 
     public boolean isAccountDeletedVisible()
     {
-        return driver.getElementText(accountDeletedHeading)
-                .equalsIgnoreCase("Account Deleted!");
+        waitFor(accountDeletedHeading);
+        return wd().findElement(accountDeletedHeading).isDisplayed();
     }
 
     public void clickContinueAfterDeletion()
     {
-        // Ads often appear after clicking 'Delete Account'
-        dismissAdIfPresent();
-        driver.clickElement(continueBtn);
+        jsClick(continueBtn);
     }
 
     // ── Footer subscription ───────────────────────────────────────────────
@@ -148,58 +125,49 @@ public class HomePage extends BasePage
 
     public boolean isSubscriptionHeadingVisible()
     {
-        return driver.getElementText(subscriptionHeading).toUpperCase().contains("SUBSCRIPTION");
+        waitFor(subscriptionHeading);
+        return wd().findElement(subscriptionHeading).getText().toUpperCase().contains("SUBSCRIPTION");
     }
 
     public void subscribeWithEmail(String email)
     {
+        killAds();
         driver.writeInElement(subscriptionEmail, email);
-        driver.clickElement(subscriptionBtn);
+        safeClick(subscriptionBtn);
     }
 
     public String getSubscriptionSuccessText()
     {
-        return driver.getElementText(subscriptionSuccess);
+        waitFor(subscriptionSuccess);
+        return wd().findElement(subscriptionSuccess).getText();
     }
 
     // ── Recommended items ─────────────────────────────────────────────────
 
-    public void scrollToRecommendedItems()
-    {
-        driver.scrollToElement(recommendedSection);
-    }
+    public void scrollToRecommendedItems() { driver.scrollToElement(recommendedSection); }
 
     public boolean isRecommendedSectionVisible()
     {
-        return driver.validateElementIsDisplayed(
-                driver.findElement("xpath", "//h2[text()='recommended items']"));
+        waitFor(recommendedSection);
+        return wd().findElement(recommendedSection).isDisplayed();
     }
 
-    public void addFirstRecommendedItemToCart()
-    {
-        driver.clickElement(recommendedAddToCart);
-    }
+    public void addFirstRecommendedItemToCart() { safeClick(recommendedAddToCart); }
 
     // ── Scroll-up arrow ───────────────────────────────────────────────────
 
-    public void scrollToBottom()
-    {
-        driver.scrollToElement(subscriptionHeading);
-    }
+    public void scrollToBottom()    { driver.scrollToElement(subscriptionHeading); }
+    public void clickScrollUpArrow(){ jsClick(scrollUpArrow); }
 
-    public void clickScrollUpArrow()
+    public void scrollUpWithJS()
     {
-        driver.clickElement(scrollUpArrow);
-    }
-
-    public void scrollUpPage()
-    {
-        driver.scrollToElement(heroText);
+        ((JavascriptExecutor) wd()).executeScript("window.scrollTo({top: 0, behavior: 'smooth'});");
     }
 
     public boolean isHeroTextVisible()
     {
-        return driver.getElementText(heroText)
+        waitFor(heroText);
+        return wd().findElement(heroText).getText()
                 .contains("Full-Fledged practice website for Automation Engineers");
     }
 
@@ -207,24 +175,22 @@ public class HomePage extends BasePage
 
     public boolean isCategorySidebarVisible()
     {
-        return driver.validateElementIsDisplayed(
-                driver.findElement("css", ".left-sidebar"));
+        waitFor(categorySidebar);
+        return wd().findElement(categorySidebar).isDisplayed();
     }
 
-    public void clickWomenCategory() { driver.clickElement(womenCategoryLink); }
-    public void clickWomenDressLink(){ driver.clickElement(womenDressLink); }
-    public void clickMenCategory()   { driver.clickElement(menCategoryLink); }
-    public void clickMenTshirtLink() { driver.clickElement(menTshirtLink); }
+    public void clickWomenCategory() { safeClick(womenCategoryLink); }
+    public void clickWomenDressLink(){ safeClick(womenDressLink); }
+    public void clickMenCategory()   { safeClick(menCategoryLink); }
+    public void clickMenTshirtLink() { safeClick(menTshirtLink); }
 
     public String getCategoryPageHeading()
     {
-        return driver.getElementText(categoryPageHeading).toUpperCase();
+        waitFor(categoryPageHeading);
+        return wd().findElement(categoryPageHeading).getText().toUpperCase();
     }
 
     // ── First product on home page ────────────────────────────────────────
 
-    public void clickFirstViewProduct()
-    {
-        driver.clickElement(firstViewProductLink);
-    }
+    public void clickFirstViewProduct() { safeClick(firstViewProductLink); }
 }

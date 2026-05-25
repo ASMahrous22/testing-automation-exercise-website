@@ -57,7 +57,7 @@ public class ASM_Framework
      * Default timeout used by all internal explicit-wait calls.
      * Shared across all managers so behaviour is consistent throughout the framework.
      */
-    private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
+    private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
 
     // ========================
     // Manager Instances

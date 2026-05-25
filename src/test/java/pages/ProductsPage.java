@@ -20,13 +20,13 @@ public class ProductsPage extends BasePage
     private final By searchedHeading    = By.xpath("//h2[text()='Searched Products']");
 
     // Add-to-cart hover buttons
-    private final By firstAddToCart     = By.xpath("(//a[@data-product-id][contains(@class,'add-to-cart')])[1]");
-    private final By secondAddToCart    = By.xpath("(//a[@data-product-id][contains(@class,'add-to-cart')])[2]");
+    private final By firstAddToCart    = By.xpath("(//a[@data-product-id='1'][contains(@class,'add-to-cart')])[1]");
+    private final By secondAddToCart   = By.xpath("(//a[@data-product-id='3'][contains(@class,'add-to-cart')])[1]");
     private final By continueShopping  = By.xpath("//button[text()='Continue Shopping']");
     private final By viewCartModal     = By.xpath("//u[text()='View Cart']");
 
     // Product detail
-    private final By firstViewProduct  = By.xpath("(//a[contains(@href,'/product_details/')])[1]");
+    private final By firstViewProduct  = By.xpath("(//a[@href='/product_details/1'][1]");
     private final By quantityField     = By.id("quantity");
     private final By addToCartBtn      = By.cssSelector("[data-qa='add-to-cart']");
     private final By viewCartLink      = By.xpath("//u[text()='View Cart']");

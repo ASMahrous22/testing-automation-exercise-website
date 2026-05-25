@@ -231,6 +231,7 @@ public class BrowserManager
      */
     public String getCurrentPageURL()
     {
+
         return browser.getCurrentUrl();
     }
 

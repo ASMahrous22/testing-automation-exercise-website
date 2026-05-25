@@ -55,8 +55,7 @@ public class HomePage extends BasePage
     private final By categoryPageHeading = By.cssSelector(".title.text-center");
 
     // ── First product on home page ────────────────────────────────────────
-    private final By firstViewProductLink = By.xpath(
-            "(//div[@class='productinfo text-center']//a[@href])[1]");
+    private final By firstViewProductLink = By.xpath("(//a[@href='/product_details/1'])[1]");
 
     // =====================================================================
 

@@ -1,8 +1,8 @@
 package pages;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 import utils.ASM_Framework;
+import utils.AdsHelper;
 
 /**
  * ProductsPage — /products page (product list and search).
@@ -82,10 +82,15 @@ public class ProductsPage extends BasePage
      * <p>After calling this, switch to {@link ProductDetailsPage} to interact
      * with the detail content.</p>
      */
+//    public void clickFirstViewProduct()
+//    {
+//        safeClick(firstViewProduct);
+//    }
     public void clickFirstViewProduct()
     {
-        //safeClick(firstViewProduct);
-        driver.clickAndWaitForUrl(firstViewProduct, "/product_details/", 10);
+        String urlToBe = "/product_details/";
+        AdsHelper.killAdsAndClick(wd(),firstViewProduct);
+        driver.clickAndWaitForUrl(firstViewProduct, urlToBe, 10);
     }
     // ── Search ────────────────────────────────────────────────────────────
 

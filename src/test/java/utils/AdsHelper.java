@@ -37,7 +37,7 @@ public class AdsHelper
     /** Timeout for single explicit waits (clickable / visible). */
     private static final Duration DEFAULT_WAIT= Duration.ofSeconds(15);
     /** Max retries for {@link #killAdsAndClick}. */
-    private static final int      MAX_RETRIES = 5;
+    private static final int      MAX_RETRIES = 3;
 
     private AdsHelper() {}
 

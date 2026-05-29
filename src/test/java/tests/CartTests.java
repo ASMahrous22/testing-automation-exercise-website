@@ -6,6 +6,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 import pages.CartPage;
 import pages.HomePage;
+import pages.ProductDetailsPage;
 import pages.ProductsPage;
 import utils.AdsHelper;
 
@@ -54,19 +55,19 @@ public class CartTests extends BaseTest
     @Severity(SeverityLevel.NORMAL)
     public void TC13_verifyProductQuantityInCart()
     {
-        HomePage     home     = new HomePage(getDriver());
-        ProductsPage products = new ProductsPage(getDriver());
-        CartPage     cart     = new CartPage(getDriver());
+        HomePage           home     = new HomePage(getDriver());
+        ProductDetailsPage detail   = new ProductDetailsPage(getDriver());
+        CartPage           cart     = new CartPage(getDriver());
 
         home.open();
         Assert.assertTrue(home.isHomePageVisible(), "Home page should be visible");
 
         home.clickFirstViewProduct();
-        Assert.assertTrue(products.isProductDetailPageOpen(), "Product detail page should be open");
+        Assert.assertTrue(detail.isProductDetailPageOpen(), "Product detail page should be open");
 
-        products.setQuantity("4");
-        products.clickAddToCart();
-        products.clickViewCart();
+        detail.setQuantity("4");
+        detail.clickAddToCart();
+        detail.clickViewCart();
 
         Assert.assertTrue(cart.isCartPageVisible(), "Cart page should be visible");
         String qty = cart.getFirstItemQuantity();
@@ -82,18 +83,18 @@ public class CartTests extends BaseTest
     @Severity(SeverityLevel.NORMAL)
     public void TC17_removeProductFromCart()
     {
-        HomePage     home     = new HomePage(getDriver());
-        ProductsPage products = new ProductsPage(getDriver());
-        CartPage     cart     = new CartPage(getDriver());
+        HomePage           home   = new HomePage(getDriver());
+        ProductDetailsPage detail = new ProductDetailsPage(getDriver());
+        CartPage           cart   = new CartPage(getDriver());
 
         home.open();
         Assert.assertTrue(home.isHomePageVisible(), "Home page should be visible");
 
         home.clickFirstViewProduct();
-        Assert.assertTrue(products.isProductDetailPageOpen(), "Product detail page should be open");
+        Assert.assertTrue(detail.isProductDetailPageOpen(), "Product detail page should be open");
 
-        products.clickAddToCart();
-        products.clickViewCart();
+        detail.clickAddToCart();
+        detail.clickViewCart();
 
         Assert.assertTrue(cart.isCartPageVisible(), "Cart page should be visible");
 

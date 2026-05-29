@@ -2,52 +2,44 @@ package pages;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.Select;
 import utils.ASM_Framework;
 
-import java.util.List;
-
 /**
- * ProductsPage — /products page and product detail page.
- * Covers TC08, TC09, TC12, TC19, TC20, TC21.
+ * ProductsPage — /products page (product list and search).
+ *
+ * <p>Responsible for everything on the All Products listing page:
+ * navigating to a product's detail page, searching, hover-add-to-cart
+ * from the product cards, and browsing the brands sidebar.</p>
+ *
+ * <p>Everything that happens <em>inside</em> a product's detail page
+ * (field visibility, quantity, add-to-cart button, reviews) has been
+ * moved to {@link ProductDetailsPage}.</p>
+ *
+ * <p>Covers: TC08, TC09, TC12, TC19, TC20.</p>
+ *
+ * @author ASMahrous
  */
 public class ProductsPage extends BasePage
 {
+    // ── All Products heading & list ───────────────────────────────────────
     private final By allProductsHeading = By.xpath("//h2[text()='All Products']");
     private final By productsList       = By.cssSelector(".features_items .col-sm-4");
-    private final By searchInput        = By.id("search_product");
-    private final By searchButton       = By.id("submit_search");
-    private final By searchedHeading    = By.xpath("//h2[text()='Searched Products']");
 
-    // Add-to-cart hover buttons
-    private final By firstAddToCart    = By.xpath("(//a[@data-product-id='1'][contains(@class,'add-to-cart')])[1]");
-    private final By secondAddToCart   = By.xpath("(//a[@data-product-id='3'][contains(@class,'add-to-cart')])[1]");
-    private final By continueShopping  = By.xpath("//button[text()='Continue Shopping']");
-    private final By viewCartModal     = By.xpath("//u[text()='View Cart']");
+    // ── Search ────────────────────────────────────────────────────────────
+    private final By searchInput     = By.id("search_product");
+    private final By searchButton    = By.id("submit_search");
+    private final By searchedHeading = By.xpath("//h2[text()='Searched Products']");
 
-    // Product detail
-    private final By firstViewProduct  = By.xpath("(//a[@href='/product_details/1'][1]");
-    private final By quantityField     = By.id("quantity");
-    private final By addToCartBtn      = By.cssSelector("[data-qa='add-to-cart']");
-    private final By viewCartLink      = By.xpath("//u[text()='View Cart']");
+    // ── Hover add-to-cart (product cards on the list page) ───────────────
+    private final By firstAddToCart   = By.xpath("(//a[@data-product-id='1'][contains(@class,'add-to-cart')])[1]");
+    private final By secondAddToCart  = By.xpath("(//a[@data-product-id='3'][contains(@class,'add-to-cart')])[1]");
+    private final By continueShopping = By.xpath("//button[text()='Continue Shopping']");
+    private final By viewCartModal    = By.xpath("//u[text()='View Cart']");
 
-    // Product detail fields
-    private final By productName         = By.xpath("//div[@class='product-information']//h2");
-    private final By productCategory     = By.xpath("//div[@class='product-information']//p[contains(.,'Category')]");
-    private final By productPrice        = By.xpath("//div[@class='product-information']//span");
-    private final By productAvailability = By.xpath("//div[@class='product-information']//p[contains(.,'Availability')]");
-    private final By productCondition    = By.xpath("//div[@class='product-information']//p[contains(.,'Condition')]");
-    private final By productBrand        = By.xpath("//div[@class='product-information']//p[contains(.,'Brand')]");
+    // ── Navigate to product detail ────────────────────────────────────────
+    private final By firstViewProduct = By.xpath("(//a[@href='/product_details/1'])[1]");
 
-    // Review
-    private final By writeReviewHeading = By.xpath("//a[text()='Write Your Review']");
-    private final By reviewName         = By.id("name");
-    private final By reviewEmail        = By.id("email");
-    private final By reviewText         = By.id("review");
-    private final By reviewSubmitBtn    = By.id("button-review");
-    private final By reviewSuccessMsg   = By.xpath("//*[contains(text(),'Thank you for your review')]");
-
-    // Brands sidebar
+    // ── Brands sidebar ────────────────────────────────────────────────────
     private final By brandsSidebar   = By.cssSelector(".brands_products");
     private final By firstBrandLink  = By.xpath("(//div[@class='brands-name']//a)[1]");
     private final By secondBrandLink = By.xpath("(//div[@class='brands-name']//a)[2]");
@@ -62,41 +54,46 @@ public class ProductsPage extends BasePage
 
     // ── All Products page ─────────────────────────────────────────────────
 
+    /**
+     * Waits for and checks the "All Products" heading visibility.
+     *
+     * @return {@code true} if the heading is displayed
+     */
     public boolean isAllProductsVisible()
     {
         waitFor(allProductsHeading);
         return wd().findElement(allProductsHeading).isDisplayed();
     }
 
+    /**
+     * @return {@code true} if at least one product card is rendered
+     */
     public boolean isProductsListVisible()
     {
         return wd().findElements(productsList).size() > 0;
     }
 
-    // ── Product detail ────────────────────────────────────────────────────
+    // ── Navigation to detail page ─────────────────────────────────────────
 
-    public void clickFirstViewProduct()      { safeClick(firstViewProduct); }
-
-    public boolean isProductDetailPageOpen()
+    /**
+     * Clicks the "View Product" link for the first product (id=1),
+     * navigating to its detail page.
+     *
+     * <p>After calling this, switch to {@link ProductDetailsPage} to interact
+     * with the detail content.</p>
+     */
+    public void clickFirstViewProduct()
     {
-        return driver.getCurrentPageURL().contains("/product_details/");
+        safeClick(firstViewProduct);
     }
-
-    private boolean isFieldVisible(By locator)
-    {
-        try { waitFor(locator); return wd().findElement(locator).isDisplayed(); }
-        catch (Exception e) { return false; }
-    }
-
-    public boolean isProductNameVisible()         { return isFieldVisible(productName); }
-    public boolean isProductCategoryVisible()     { return isFieldVisible(productCategory); }
-    public boolean isProductPriceVisible()        { return isFieldVisible(productPrice); }
-    public boolean isProductAvailabilityVisible() { return isFieldVisible(productAvailability); }
-    public boolean isProductConditionVisible()    { return isFieldVisible(productCondition); }
-    public boolean isProductBrandVisible()        { return isFieldVisible(productBrand); }
 
     // ── Search ────────────────────────────────────────────────────────────
 
+    /**
+     * Types {@code name} into the search box and submits the search.
+     *
+     * @param name the product name to search for
+     */
     public void searchProduct(String name)
     {
         killAds();
@@ -104,58 +101,71 @@ public class ProductsPage extends BasePage
         safeClick(searchButton);
     }
 
+    /**
+     * @return {@code true} if the "Searched Products" heading is visible
+     */
     public boolean isSearchedProductsHeadingVisible()
     {
         waitFor(searchedHeading);
         return wd().findElement(searchedHeading).isDisplayed();
     }
 
+    /**
+     * @return the number of product cards currently shown (used for search assertions)
+     */
     public int getSearchedProductCount()
     {
         return wd().findElements(productsList).size();
     }
 
-    // ── TC12: hover add to cart ───────────────────────────────────────────
+    // ── TC12: hover add-to-cart from product cards ────────────────────────
 
+    /**
+     * Hovers over the first product card and clicks its "Add to cart" overlay button.
+     * A modal will appear — use {@link #clickContinueShopping()} to dismiss it.
+     */
     public void hoverAndAddFirstProductToCart()
     {
         driver.hoverOverElement(firstAddToCart);
         safeClick(firstAddToCart);
     }
 
+    /**
+     * Hovers over the second product card and clicks its "Add to cart" overlay button.
+     * A modal will appear — use {@link #clickViewCartFromModal()} to go to the cart.
+     */
     public void hoverAndAddSecondProductToCart()
     {
         driver.hoverOverElement(secondAddToCart);
         safeClick(secondAddToCart);
     }
 
+    /**
+     * Dismisses the post-add-to-cart modal by clicking "Continue Shopping".
+     */
     public void clickContinueShopping()
     {
         waitFor(continueShopping);
         safeClick(continueShopping);
     }
 
+    /**
+     * Dismisses the post-add-to-cart modal by clicking "View Cart",
+     * navigating directly to the cart page.
+     */
     public void clickViewCartFromModal()
     {
         waitFor(viewCartModal);
         jsClick(viewCartModal);
     }
 
-    // ── TC13: quantity ────────────────────────────────────────────────────
+    // ── TC20: add first searched product without blocking on modal ────────
 
-    public void setQuantity(String qty)
-    {
-        killAds();
-        WebElement qtyField = wd().findElement(quantityField);
-        qtyField.clear();
-        qtyField.sendKeys(qty);
-    }
-
-    public void clickAddToCart()   { safeClick(addToCartBtn); }
-    public void clickViewCart()    { jsClick(viewCartLink); }
-
-    // ── TC20: add all searched products ──────────────────────────────────
-
+    /**
+     * Hovers and adds the first product to the cart, then silently dismisses
+     * the "Continue Shopping" modal if it appears.
+     * Use this in flows where you need to stay on the products list page.
+     */
     public void hoverAndAddFirstProductToCartNoModal()
     {
         driver.hoverOverElement(firstAddToCart);
@@ -168,48 +178,38 @@ public class ProductsPage extends BasePage
         catch (Exception ignored) {}
     }
 
-    // ── TC21: review ──────────────────────────────────────────────────────
+    // ── TC19: brands sidebar ──────────────────────────────────────────────
 
-    public boolean isWriteReviewVisible()
-    {
-        driver.scrollToElement(writeReviewHeading);
-        waitFor(writeReviewHeading);
-        return wd().findElement(writeReviewHeading).isDisplayed();
-    }
-
-    public void submitReview(String name, String email, String review)
-    {
-        killAds();
-        driver.writeInElement(reviewName,  name);
-        driver.writeInElement(reviewEmail, email);
-        driver.writeInElement(reviewText,  review);
-        safeClick(reviewSubmitBtn);
-    }
-
-    public boolean isReviewSuccessVisible()
-    {
-        try { waitFor(reviewSuccessMsg); return wd().findElement(reviewSuccessMsg).isDisplayed(); }
-        catch (Exception e) { return false; }
-    }
-
-    // ── TC19: brands ─────────────────────────────────────────────────────
-
+    /**
+     * @return {@code true} if the Brands sidebar panel is rendered
+     */
     public boolean isBrandsSidebarVisible()
     {
         return wd().findElements(brandsSidebar).size() > 0;
     }
 
+    /** Clicks the first brand link in the sidebar. */
     public void clickFirstBrand()  { safeClick(firstBrandLink); }
+
+    /** Clicks the second brand link in the sidebar. */
     public void clickSecondBrand() { safeClick(secondBrandLink); }
 
+    /**
+     * Returns the page title shown on a brand products page.
+     *
+     * @return the title text (e.g., "Brand - Polo Products")
+     */
     public String getBrandPageTitle()
     {
         waitFor(brandPageTitle);
         return wd().findElement(brandPageTitle).getText();
     }
 
+    /**
+     * @return {@code true} if at least one product is shown on the brand page
+     */
     public boolean isBrandPageProductsVisible()
     {
-        return wd().findElements(productsList).size() > 0;
+        return !wd().findElements(productsList).isEmpty();
     }
 }

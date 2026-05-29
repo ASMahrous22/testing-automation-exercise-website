@@ -6,6 +6,7 @@ import org.testng.annotations.Test;
 import pages.CartPage;
 import pages.HomePage;
 import pages.LoginPage;
+import pages.ProductDetailsPage;
 import pages.ProductsPage;
 import testdata.UserData;
 import utils.DataReader;
@@ -27,8 +28,9 @@ public class ProductTests extends BaseTest
     @Severity(SeverityLevel.NORMAL)
     public void TC08_verifyAllProductsAndDetailPage()
     {
-        HomePage     home     = new HomePage(getDriver());
-        ProductsPage products = new ProductsPage(getDriver());
+        HomePage           home    = new HomePage(getDriver());
+        ProductsPage       products = new ProductsPage(getDriver());
+        ProductDetailsPage detail   = new ProductDetailsPage(getDriver());
 
         home.open();
         Assert.assertTrue(home.isHomePageVisible(), "Home page should be visible");
@@ -38,14 +40,14 @@ public class ProductTests extends BaseTest
         Assert.assertTrue(products.isProductsListVisible(), "Products list should be visible");
 
         products.clickFirstViewProduct();
-        Assert.assertTrue(products.isProductDetailPageOpen(), "Product detail page should be open");
+        Assert.assertTrue(detail.isProductDetailPageOpen(), "Product detail page should be open");
 
-        Assert.assertTrue(products.isProductNameVisible(),         "Product name should be visible");
-        Assert.assertTrue(products.isProductCategoryVisible(),     "Product category should be visible");
-        Assert.assertTrue(products.isProductPriceVisible(),        "Product price should be visible");
-        Assert.assertTrue(products.isProductAvailabilityVisible(), "Product availability should be visible");
-        Assert.assertTrue(products.isProductConditionVisible(),    "Product condition should be visible");
-        Assert.assertTrue(products.isProductBrandVisible(),        "Product brand should be visible");
+        Assert.assertTrue(detail.isProductNameVisible(),         "Product name should be visible");
+        Assert.assertTrue(detail.isProductCategoryVisible(),     "Product category should be visible");
+        Assert.assertTrue(detail.isProductPriceVisible(),        "Product price should be visible");
+        Assert.assertTrue(detail.isProductAvailabilityVisible(), "Product availability should be visible");
+        Assert.assertTrue(detail.isProductConditionVisible(),    "Product condition should be visible");
+        Assert.assertTrue(detail.isProductBrandVisible(),        "Product brand should be visible");
     }
 
     // =====================================================================
@@ -125,21 +127,22 @@ public class ProductTests extends BaseTest
     @Severity(SeverityLevel.MINOR)
     public void TC21_addReviewOnProduct()
     {
-        HomePage     home     = new HomePage(getDriver());
-        ProductsPage products = new ProductsPage(getDriver());
+        HomePage           home     = new HomePage(getDriver());
+        ProductsPage       products = new ProductsPage(getDriver());
+        ProductDetailsPage detail   = new ProductDetailsPage(getDriver());
 
         home.open();
         home.clickProducts();
         Assert.assertTrue(products.isAllProductsVisible(), "ALL PRODUCTS heading should be visible");
 
         products.clickFirstViewProduct();
-        Assert.assertTrue(products.isProductDetailPageOpen(), "Product detail page should be open");
+        Assert.assertTrue(detail.isProductDetailPageOpen(), "Product detail page should be open");
 
-        Assert.assertTrue(products.isWriteReviewVisible(),
+        Assert.assertTrue(detail.isWriteReviewVisible(),
                 "'Write Your Review' section should be visible");
 
-        products.submitReview("abdallah", "review@test.com", "Great product! Highly recommended.");
-        Assert.assertTrue(products.isReviewSuccessVisible(),
+        detail.submitReview("abdallah", "review@test.com", "Great product! Highly recommended.");
+        Assert.assertTrue(detail.isReviewSuccessVisible(),
                 "Review success message should appear");
     }
 }

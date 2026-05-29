@@ -23,13 +23,16 @@ public class CheckoutTests extends BaseTest
 
     /**
      * Navigates to the first product's detail page and adds it to cart,
-     * then dismisses the Continue Shopping modal so the caller can navigate freely.
+     * then dismisses the "Continue Shopping" modal so the caller can navigate freely.
+     *
+     * <p>Uses {@link ProductDetailsPage} for the add-to-cart interaction because
+     * the action happens on the detail page, not the products list.</p>
      */
-    private void addFirstProductToCart(HomePage home, ProductsPage products)
+    private void addFirstProductToCart(HomePage home, ProductDetailsPage detail)
     {
         home.clickFirstViewProduct();
-        products.clickAddToCart();
-        try { products.clickContinueShopping(); } catch (Exception ignored) {}
+        detail.clickAddToCart();
+        try { detail.clickContinueShopping(); } catch (Exception ignored) {}
     }
 
     // =====================================================================
@@ -46,17 +49,17 @@ public class CheckoutTests extends BaseTest
         u.name        = "abdallah";
         PaymentData p = DataReader.read("payment.json", PaymentData.class);
 
-        HomePage     home     = new HomePage(getDriver());
-        ProductsPage products = new ProductsPage(getDriver());
-        CartPage     cart     = new CartPage(getDriver());
-        CheckoutPage checkout = new CheckoutPage(getDriver());
-        PaymentPage  payment  = new PaymentPage(getDriver());
-        LoginPage    login    = new LoginPage(getDriver());
+        HomePage           home     = new HomePage(getDriver());
+        ProductDetailsPage detail   = new ProductDetailsPage(getDriver());
+        CartPage           cart     = new CartPage(getDriver());
+        CheckoutPage       checkout = new CheckoutPage(getDriver());
+        PaymentPage        payment  = new PaymentPage(getDriver());
+        LoginPage          login    = new LoginPage(getDriver());
 
         home.open();
         Assert.assertTrue(home.isHomePageVisible(), "Home page should be visible");
 
-        addFirstProductToCart(home, products);
+        addFirstProductToCart(home, detail);
         home.clickCart();
         Assert.assertTrue(cart.isCartPageVisible(), "Cart page should be visible");
 
@@ -101,12 +104,12 @@ public class CheckoutTests extends BaseTest
         u.name        = "abdallah";
         PaymentData p = DataReader.read("payment.json", PaymentData.class);
 
-        HomePage     home     = new HomePage(getDriver());
-        ProductsPage products = new ProductsPage(getDriver());
-        CartPage     cart     = new CartPage(getDriver());
-        CheckoutPage checkout = new CheckoutPage(getDriver());
-        PaymentPage  payment  = new PaymentPage(getDriver());
-        LoginPage    login    = new LoginPage(getDriver());
+        HomePage           home     = new HomePage(getDriver());
+        ProductDetailsPage detail   = new ProductDetailsPage(getDriver());
+        CartPage           cart     = new CartPage(getDriver());
+        CheckoutPage       checkout = new CheckoutPage(getDriver());
+        PaymentPage        payment  = new PaymentPage(getDriver());
+        LoginPage          login    = new LoginPage(getDriver());
 
         home.open();
         Assert.assertTrue(home.isHomePageVisible(), "Home page should be visible");
@@ -115,7 +118,7 @@ public class CheckoutTests extends BaseTest
         Assert.assertTrue(home.getLoggedInUsername().toLowerCase().contains("abdallah"),
                 "'Logged in as abdallah' should appear");
 
-        addFirstProductToCart(home, products);
+        addFirstProductToCart(home, detail);
         home.clickCart();
         Assert.assertTrue(cart.isCartPageVisible(), "Cart page should be visible");
 
@@ -146,25 +149,24 @@ public class CheckoutTests extends BaseTest
     @Severity(SeverityLevel.CRITICAL)
     public void TC16_placeOrderLoginBeforeCheckout() throws IOException
     {
-        // Register a fresh user so the test is fully self-contained
         UserData    u = DataReader.read("user.json", UserData.class);
         u.email       = uniqueEmail();
         u.name        = "abdallah";
         PaymentData p = DataReader.read("payment.json", PaymentData.class);
 
-        HomePage     home     = new HomePage(getDriver());
-        ProductsPage products = new ProductsPage(getDriver());
-        CartPage     cart     = new CartPage(getDriver());
-        CheckoutPage checkout = new CheckoutPage(getDriver());
-        PaymentPage  payment  = new PaymentPage(getDriver());
-        LoginPage    login    = new LoginPage(getDriver());
+        HomePage           home     = new HomePage(getDriver());
+        ProductDetailsPage detail   = new ProductDetailsPage(getDriver());
+        CartPage           cart     = new CartPage(getDriver());
+        CheckoutPage       checkout = new CheckoutPage(getDriver());
+        PaymentPage        payment  = new PaymentPage(getDriver());
+        LoginPage          login    = new LoginPage(getDriver());
 
         home.open();
         RegisterLoginTests.registerAndContinue(home, login, u);
         Assert.assertTrue(home.getLoggedInUsername().toLowerCase().contains("abdallah"),
                 "'Logged in as abdallah' should appear");
 
-        addFirstProductToCart(home, products);
+        addFirstProductToCart(home, detail);
         home.clickCart();
         Assert.assertTrue(cart.isCartPageVisible(), "Cart page should be visible");
 
@@ -199,18 +201,18 @@ public class CheckoutTests extends BaseTest
         u.email    = uniqueEmail();
         u.name     = "abdallah";
 
-        HomePage     home     = new HomePage(getDriver());
-        ProductsPage products = new ProductsPage(getDriver());
-        CartPage     cart     = new CartPage(getDriver());
-        CheckoutPage checkout = new CheckoutPage(getDriver());
-        LoginPage    login    = new LoginPage(getDriver());
+        HomePage           home     = new HomePage(getDriver());
+        ProductDetailsPage detail   = new ProductDetailsPage(getDriver());
+        CartPage           cart     = new CartPage(getDriver());
+        CheckoutPage       checkout = new CheckoutPage(getDriver());
+        LoginPage          login    = new LoginPage(getDriver());
 
         home.open();
         RegisterLoginTests.registerAndContinue(home, login, u);
         Assert.assertTrue(home.getLoggedInUsername().toLowerCase().contains("abdallah"),
                 "'Logged in as abdallah' should appear");
 
-        addFirstProductToCart(home, products);
+        addFirstProductToCart(home, detail);
         home.clickCart();
         Assert.assertTrue(cart.isCartPageVisible(), "Cart page should be visible");
 
@@ -242,17 +244,17 @@ public class CheckoutTests extends BaseTest
         u.name        = "abdallah";
         PaymentData p = DataReader.read("payment.json", PaymentData.class);
 
-        HomePage     home     = new HomePage(getDriver());
-        ProductsPage products = new ProductsPage(getDriver());
-        CartPage     cart     = new CartPage(getDriver());
-        CheckoutPage checkout = new CheckoutPage(getDriver());
-        PaymentPage  payment  = new PaymentPage(getDriver());
-        LoginPage    login    = new LoginPage(getDriver());
+        HomePage           home     = new HomePage(getDriver());
+        ProductDetailsPage detail   = new ProductDetailsPage(getDriver());
+        CartPage           cart     = new CartPage(getDriver());
+        CheckoutPage       checkout = new CheckoutPage(getDriver());
+        PaymentPage        payment  = new PaymentPage(getDriver());
+        LoginPage          login    = new LoginPage(getDriver());
 
         home.open();
         Assert.assertTrue(home.isHomePageVisible(), "Home page should be visible");
 
-        addFirstProductToCart(home, products);
+        addFirstProductToCart(home, detail);
         home.clickCart();
         Assert.assertTrue(cart.isCartPageVisible(), "Cart page should be visible");
 
@@ -275,10 +277,7 @@ public class CheckoutTests extends BaseTest
         Assert.assertTrue(payment.isOrderPlacedSuccessfully(),
                 "'Your order has been placed successfully!' should appear");
 
-        // Download invoice button click — wait for it to be ready first
         payment.clickDownloadInvoice();
-
-        // Wait for the page to settle after download triggers, then continue
         payment.clickContinue();
 
         home.clickDeleteAccount();

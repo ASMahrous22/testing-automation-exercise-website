@@ -142,7 +142,6 @@ public class AdsHelper
                     return;
                 }
                 // Not the last attempt — wait for clickability with short timeout,
-                // then loop again (no Thread.sleep)
                 try { waitForClickable(driver, locator, RETRY_WAIT); }
                 catch (Exception ignored) {}
             }

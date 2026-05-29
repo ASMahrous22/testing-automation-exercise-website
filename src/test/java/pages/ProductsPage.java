@@ -84,9 +84,9 @@ public class ProductsPage extends BasePage
      */
     public void clickFirstViewProduct()
     {
-        safeClick(firstViewProduct);
+        //safeClick(firstViewProduct);
+        driver.clickAndWaitForUrl(firstViewProduct, "/product_details/", 10);
     }
-
     // ── Search ────────────────────────────────────────────────────────────
 
     /**

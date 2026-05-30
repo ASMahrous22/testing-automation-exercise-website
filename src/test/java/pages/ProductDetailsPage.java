@@ -38,7 +38,7 @@ public class ProductDetailsPage extends BasePage
 
     // ── Quantity + Add to cart ────────────────────────────────────────────
     private final By quantityField  = By.id("quantity");
-    private final By addToCartBtn   = By.cssSelector("[data-qa='add-to-cart']");
+    private final By addToCartBtn   = By.cssSelector("button[class='btn btn-default cart']");
 
     // ── Post-add-to-cart modal ────────────────────────────────────────────
     private final By continueShopping = By.xpath("//button[text()='Continue Shopping']");

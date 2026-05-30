@@ -3,6 +3,7 @@ package pages;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import utils.ASM_Framework;
+import utils.AdsHelper;
 
 /**
  * HomePage — automationexercise.com home page.
@@ -48,10 +49,12 @@ public class HomePage extends BasePage
 
     // ── Category sidebar ──────────────────────────────────────────────────
     private final By categorySidebar   = By.cssSelector(".left-sidebar");
+    private final By womenCategoryPlus = By.cssSelector("a[href='#Women'] span i");
     private final By womenCategoryLink = By.xpath("//a[@href='#Women']");
-    private final By womenDressLink    = By.xpath("//div[@id='Women']//a[contains(@href,'dress')]");
+    private final By womenDressLink    = By.xpath("//div[@id='Women']//a[@href='/category_products/1']");
+    private final By menCategoryPlus = By.cssSelector("a[href='#Men'] span i");
     private final By menCategoryLink   = By.xpath("//a[@href='#Men']");
-    private final By menTshirtLink     = By.xpath("//div[@id='Men']//a[contains(@href,'tshirts')]");
+    private final By menTshirtLink     = By.xpath("//div[@id='Men']//a[@href='/category_products/3']");
     private final By categoryPageHeading = By.cssSelector(".title.text-center");
 
     // ── First product on home page ────────────────────────────────────────
@@ -178,10 +181,22 @@ public class HomePage extends BasePage
         return wd().findElement(categorySidebar).isDisplayed();
     }
 
+    public void expandMenCategory()   { safeClick(menCategoryPlus); }
+    public void expandWomenCategory() { safeClick(womenCategoryPlus); }
     public void clickWomenCategory() { safeClick(womenCategoryLink); }
-    public void clickWomenDressLink(){ safeClick(womenDressLink); }
+
+    public void clickWomenDressLink()
+    {
+        expandWomenCategory();  // ensures subcategories are visible
+        safeClick(womenDressLink);
+    }
     public void clickMenCategory()   { safeClick(menCategoryLink); }
-    public void clickMenTshirtLink() { safeClick(menTshirtLink); }
+
+    public void clickMenTshirtLink()
+    {
+        expandMenCategory();  // ensures subcategories are visible
+        safeClick(menTshirtLink);
+    }
 
     public String getCategoryPageHeading()
     {
@@ -191,5 +206,12 @@ public class HomePage extends BasePage
 
     // ── First product on home page ────────────────────────────────────────
 
-    public void clickFirstViewProduct() { safeClick(firstViewProductLink); }
+    public void clickFirstViewProduct()
+    {
+        //safeClick(firstViewProductLink);
+
+        String urlToBe = "/product_details/";
+        AdsHelper.killAdsAndClick(wd(),firstViewProductLink);
+        driver.clickAndWaitForUrl(firstViewProductLink, urlToBe, 10);
+    }
 }

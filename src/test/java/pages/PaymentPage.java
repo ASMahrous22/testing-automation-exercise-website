@@ -44,7 +44,8 @@ public class PaymentPage extends BasePage
 
     public void clickPayAndConfirm()
     {
-        driver.clickElement(payConfirmBtn);
+        //driver.clickElement(payConfirmBtn);
+        safeClick(payConfirmBtn);
     }
 
     public String getOrderSuccessText()

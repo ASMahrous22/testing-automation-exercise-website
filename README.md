@@ -2,7 +2,7 @@
 
 Automated test suite covering all 26 official test cases from
 [automationexercise.com/test_cases](https://automationexercise.com/test_cases),
-built on top of the ASM Framework using TestNG, Allure, and the Page Object Model.
+built on top of the **ASM Framework** using TestNG, Allure, and the Page Object Model.
 
 ---
 
@@ -14,7 +14,7 @@ built on top of the ASM Framework using TestNG, Allure, and the Page Object Mode
 4. [Setup & Installation](#setup--installation)
 5. [Configuration](#configuration)
 6. [Test Data Setup](#test-data-setup)
-7. [Page Objects Used](#page-objects-used)
+7. [Page Objects](#page-objects)
 8. [All 26 Test Cases — Full Reference](#all-26-test-cases--full-reference)
 9. [Registering Tests in testng.xml](#registering-tests-in-testngxml)
 10. [Running the Tests](#running-the-tests)
@@ -26,21 +26,22 @@ built on top of the ASM Framework using TestNG, Allure, and the Page Object Mode
 ## Project Overview
 
 This repository implements the complete set of 26 automated test cases defined on
-AutomationExercise.com. The tests are organized by feature area into separate test
-classes, each extending `BaseTest` for automatic browser lifecycle, parallel-safe
-thread-local driver management, and on-failure screenshot capture.
+AutomationExercise.com, plus two additional negative-path cases (N01, N02). The
+tests are organized by feature area into separate test classes, each extending
+`BaseTest` for automatic browser lifecycle management, thread-safe parallel
+execution via `ThreadLocal`, and on-failure screenshot capture.
 
 **Feature areas covered:**
 
 | Area | Test Cases | Test Class |
 |---|---|---|
-| User Registration & Login | TC01 – TC05 | `RegisterLoginTests` |
+| User Registration & Login | TC01 – TC05, NEGATIVE N01–N02 | `RegisterLoginTests` |
 | Contact Us & Navigation | TC06 – TC07 | `ContactAndNavigationTests` |
-| Products & Search | TC08 – TC09, TC19 – TC21 | `ProductTests` |
+| Products & Search | TC08, TC09, TC20, TC21 | `ProductTests` |
 | Subscription | TC10 – TC11 | `SubscriptionTests` |
-| Cart Management | TC12 – TC13, TC17, TC22 | `CartTests` |
+| Cart Management | TC12, TC13, TC17, TC22 | `CartTests` |
 | Checkout & Orders | TC14 – TC16, TC23 – TC24 | `CheckoutTests` |
-| Categories & Brands | TC18 – TC19 | `CategoryBrandTests` |
+| Categories & Brands | TC18, TC19 | `CategoryBrandTests` |
 | UI / Scroll Behaviour | TC25 – TC26 | `ScrollTests` |
 
 ---
@@ -50,7 +51,7 @@ thread-local driver management, and on-failure screenshot capture.
 | Tool | Version | Purpose |
 |---|---|---|
 | Java | 24 | Language |
-| Selenium WebDriver | 4.40.0 | Browser automation |
+| Selenium WebDriver | 4.41.0 | Browser automation |
 | TestNG | 7.12.0 | Test runner, lifecycle, suite XML |
 | Allure TestNG | 2.34.0 | HTML reports + screenshot attachment |
 | Gson | 2.14.0 | JSON test data deserialization |
@@ -67,28 +68,39 @@ automationexercise-tests/
 │   ├── main/
 │   │   └── java/
 │   │       └── utils/
-│   │           ├── ASM_Framework.java          ← single driver entry point
-│   │           └── framework/                  ← internal managers (do not edit)
+│   │           ├── ASM_Framework.java          ← single driver entry point (use this in tests)
+│   │           └── framework/                  ← internal managers (do not use directly)
+│   │               ├── BrowserManager.java
+│   │               ├── WaitManager.java
+│   │               ├── ElementFinder.java
+│   │               ├── ElementInteractions.java
+│   │               ├── ActionsManager.java
+│   │               ├── DropdownManager.java
+│   │               ├── WindowManager.java
+│   │               ├── AlertManager.java
+│   │               ├── FrameManager.java
+│   │               └── ScreenshotManager.java
 │   │
 │   └── test/
 │       ├── java/
 │       │   ├── pages/
-│       │   │   ├── BasePage.java
+│       │   │   ├── BasePage.java               ← parent for all page objects
 │       │   │   ├── HomePage.java
 │       │   │   ├── LoginPage.java              ← TC01–TC05
 │       │   │   ├── ContactPage.java            ← TC06
-│       │   │   ├── ProductsPage.java           ← TC08–TC09, TC19–TC21
+│       │   │   ├── ProductsPage.java           ← TC08–TC09, TC19–TC20
+│       │   │   ├── ProductDetailsPage.java     ← TC08, TC13, TC17, TC21
 │       │   │   ├── CartPage.java               ← TC11–TC13, TC17, TC22
 │       │   │   ├── CheckoutPage.java           ← TC14–TC16, TC23–TC24
 │       │   │   └── PaymentPage.java            ← TC14–TC16, TC24
 │       │   │
 │       │   ├── tests/
-│       │   │   ├── BaseTest.java
-│       │   │   ├── RegisterLoginTests.java     ← TC01–TC05
+│       │   │   ├── BaseTest.java               ← lifecycle, ThreadLocal driver, config
+│       │   │   ├── RegisterLoginTests.java     ← TC01–TC05, N01, N02
 │       │   │   ├── ContactAndNavigationTests.java ← TC06–TC07
-│       │   │   ├── ProductTests.java           ← TC08–TC09, TC21
+│       │   │   ├── ProductTests.java           ← TC08, TC09, TC20, TC21
 │       │   │   ├── SubscriptionTests.java      ← TC10–TC11
-│       │   │   ├── CartTests.java              ← TC12–TC13, TC17, TC22
+│       │   │   ├── CartTests.java              ← TC12, TC13, TC17, TC22
 │       │   │   ├── CheckoutTests.java          ← TC14–TC16, TC23–TC24
 │       │   │   ├── CategoryBrandTests.java     ← TC18–TC19
 │       │   │   └── ScrollTests.java            ← TC25–TC26
@@ -96,11 +108,12 @@ automationexercise-tests/
 │       │   ├── testdata/
 │       │   │   ├── UserData.java
 │       │   │   ├── PaymentData.java
-│       │   │   └── AddressData.java
+│       │   │   └── ContactData.java
 │       │   │
 │       │   └── utils/
-│       │       ├── AllureHelper.java
-│       │       └── DataReader.java
+│       │       ├── AdsHelper.java              ← ad-killing, safe-click, wait helpers
+│       │       ├── AllureHelper.java           ← screenshot → Allure attachment
+│       │       └── DataReader.java             ← JSON test data reader (Gson)
 │       │
 │       └── resources/
 │           ├── config.properties
@@ -108,16 +121,22 @@ automationexercise-tests/
 │               ├── user.json
 │               ├── existingUser.json
 │               ├── payment.json
-│               └── address.json
+│               ├── contact.json
+│               └── upload_sample.txt
 │
 ├── testng-suites/
-│   └── testng.xml
+│   └── Testng.xml
 │
 ├── Screenshots/                               ← auto-created at runtime
 ├── allure-results/                            ← auto-created by Allure
 ├── pom.xml
 └── README.md
 ```
+
+> **Important:** All framework interactions in page objects and tests go through
+> `ASM_Framework` (accessed via `driver` in page objects or `getDriver()` in tests).
+> The classes under `utils/framework/` are internal implementation details — never
+> import or instantiate them directly.
 
 ---
 
@@ -168,557 +187,361 @@ base.url=https://automationexercise.com
 headless=false
 ```
 
-These values are read automatically by `BaseTest`. You can also override them
-at the command line:
+`BaseTest` reads these values automatically at suite startup. You can also override
+them on the command line:
 
 ```bash
 mvn test -Dbrowser=firefox -Dheadless=true
 ```
 
-> **Note:** To use command-line overrides, add `System.getProperty("browser", CONFIG.getProperty("browser"))` in `BaseTest.loadConfig()`.
-
 ---
 
 ## Test Data Setup
 
-All test data lives in `src/test/resources/testdata/` as JSON files.
-Create the following files before running the tests.
+All test data lives in `src/test/resources/testdata/` as JSON files. They are
+deserialized at runtime by `DataReader` using Gson.
 
 ### `user.json` — new user registration details
 
 ```json
 {
-  "name": "Test User",
-  "email": "testuser_unique123@example.com",
-  "password": "Test@1234",
-  "firstName": "Test",
-  "lastName": "User",
-  "company": "Test Corp",
-  "address1": "123 Test Street",
-  "address2": "Suite 456",
-  "country": "United States",
-  "state": "California",
-  "city": "Los Angeles",
-  "zipcode": "90001",
-  "mobileNumber": "5551234567",
-  "dayOfBirth": "15",
-  "monthOfBirth": "June",
-  "yearOfBirth": "1990"
+  "title":         "Mr",
+  "name":          "abdallah",
+  "firstName":     "Abdallah",
+  "lastName":      "Mahrous",
+  "email":         "asm7391@test.com",
+  "password":      "Test@1234",
+  "dayOfBirth":    "27",
+  "monthOfBirth":  "February",
+  "yearOfBirth":   "2001",
+  "company":       "EDGES",
+  "address1":      "123 Test Street",
+  "address2":      "Suite 456",
+  "country":       "United States",
+  "state":         "California",
+  "city":          "Los Angeles",
+  "zipcode":       "90001",
+  "mobileNumber":  "5551234567"
 }
 ```
 
-> **Important:** The email in `user.json` must be unique each run, or TC01 will
-> fail on the registration step because the email already exists. Either use a
-> dynamic email in the test (`UUID` + `@example.com`) or change this file before
-> each run.
+> **Important:** Registration tests (TC01, TC02, TC04, TC14–TC16, TC23–TC24)
+> override `email` at runtime using `System.currentTimeMillis()` to guarantee
+> uniqueness, so the email in this file is only a fallback.
 
-### `existingUser.json` — a pre-created account for login tests
+### `existingUser.json` — a pre-created account for TC05 and TC20
 
 ```json
 {
-  "email": "existing_account@example.com",
-  "password": "ExistingPass@1"
+  "name":     "abdallah",
+  "email":    "asm4821@test.com",
+  "password": "Test@1234"
 }
 ```
 
-Create this account manually on the site once before running TC02, TC04, TC16, TC20.
+Create this account manually on the site once before running TC05 and TC20.
 
 ### `payment.json` — card details for checkout tests
 
 ```json
 {
-  "nameOnCard": "Test User",
-  "cardNumber": "4111111111111111",
-  "cvc": "123",
-  "expiryMonth": "12",
-  "expiryYear": "2027"
+  "nameOnCard":   "Abdallah Mahrous",
+  "cardNumber":   "4111111111111111",
+  "cvc":          "123",
+  "expiryMonth":  "12",
+  "expiryYear":   "2027"
 }
 ```
 
-### `address.json` — address used to verify checkout address matching (TC23)
+### `contact.json` — Contact Us form data for TC06
 
 ```json
 {
-  "firstName": "Test",
-  "lastName": "User",
-  "company": "Test Corp",
-  "address1": "123 Test Street",
-  "address2": "Suite 456",
-  "country": "United States",
-  "state": "California",
-  "city": "Los Angeles",
-  "zipcode": "90001",
-  "mobileNumber": "5551234567"
+  "name":     "abdallah",
+  "email":    "asm6204@test.com",
+  "subject":  "Test Automation Inquiry",
+  "message":  "This is an automated test message sent by the Selenium test suite.",
+  "filePath": "src/test/resources/testdata/upload_sample.txt"
 }
 ```
 
-### Corresponding POJOs — `src/test/java/testdata/`
+### POJO classes — `src/test/java/testdata/`
 
-**`UserData.java`**
-```java
-package testdata;
-public class UserData {
-    public String name, email, password;
-    public String firstName, lastName, company;
-    public String address1, address2, country, state, city, zipcode, mobileNumber;
-    public String dayOfBirth, monthOfBirth, yearOfBirth;
-}
-```
-
-**`PaymentData.java`**
-```java
-package testdata;
-public class PaymentData {
-    public String nameOnCard, cardNumber, cvc, expiryMonth, expiryYear;
-}
-```
-
-**`AddressData.java`**
-```java
-package testdata;
-public class AddressData {
-    public String firstName, lastName, company;
-    public String address1, address2, country, state, city, zipcode, mobileNumber;
-}
-```
+| Class | JSON file | Fields |
+|---|---|---|
+| `UserData` | `user.json`, `existingUser.json` | title, name, firstName, lastName, email, password, dayOfBirth, monthOfBirth, yearOfBirth, company, address1, address2, country, state, city, zipcode, mobileNumber |
+| `PaymentData` | `payment.json` | nameOnCard, cardNumber, cvc, expiryMonth, expiryYear |
+| `ContactData` | `contact.json` | name, email, subject, message, filePath |
 
 ---
 
-## Page Objects Used
+## Page Objects
 
-Each page class extends `BasePage` and exposes methods for exactly one page's
-actions. Locators are `private final By` fields — never exposed publicly.
+Each page class extends `BasePage` and exposes public methods for exactly one
+page's actions. Locators are `private final By` fields — never exposed publicly.
+All clicks and waits go through `AdsHelper` primitives inherited from `BasePage`
+to suppress ad overlays that would otherwise block interactions.
 
-| Page Class | Covers |
-|---|---|
-| `HomePage` | Home page visibility, scroll, recommended items, subscription footer, scroll-up arrow |
-| `LoginPage` | Login form, signup form, error messages, logged-in header assertion |
-| `ContactPage` | Contact Us form, file upload, submit, success message |
-| `ProductsPage` | Products list, search, product detail, hover add-to-cart, categories, brands, review form |
-| `CartPage` | Cart items, quantities, prices, remove product, proceed to checkout |
-| `CheckoutPage` | Address details, order comment, place order |
-| `PaymentPage` | Payment form, confirm order, download invoice |
+| Page Class | URL / area | Covers |
+|---|---|---|
+| `HomePage` | `/` | Visibility, navbar clicks, logged-in state, subscription footer, categories sidebar, recommended items, scroll-up |
+| `LoginPage` | `/login` | Login form, signup step 1, account info form, ACCOUNT CREATED, Continue button |
+| `ContactPage` | `/contact_us` | Contact Us form, file upload, alert, success message, Home button |
+| `ProductsPage` | `/products` | Product list, search, hover add-to-cart, View Product link, brands sidebar |
+| `ProductDetailsPage` | `/product_details/{id}` | Detail fields, quantity, add-to-cart, Continue/View Cart modal, review form |
+| `CartPage` | `/view_cart` | Item count, quantity, remove, proceed to checkout, Register/Login link, subscription |
+| `CheckoutPage` | `/checkout` | Address blocks, order comment, Place Order button |
+| `PaymentPage` | `/payment` | Payment form, Pay and Confirm, order success, Download Invoice, Continue |
 
 ---
 
 ## All 26 Test Cases — Full Reference
 
-Each entry below lists the test class and method name it maps to, plus the
-complete steps from the official spec.
-
----
-
 ### TC01 — Register User
-**Class:** `RegisterLoginTests` · **Method:** `registerNewUser`
+**Class:** `RegisterLoginTests` · **Method:** `TC01_registerNewUser`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Click 'Signup / Login'
-4. Verify 'New User Signup!' is visible
-5. Enter name and email address
-6. Click 'Signup'
-7. Verify 'ENTER ACCOUNT INFORMATION' is visible
-8. Fill Title, Name, Email, Password, Date of birth
-9. Check 'Sign up for our newsletter!'
-10. Check 'Receive special offers from our partners!'
-11. Fill First name, Last name, Company, Address, Address2, Country, State, City, Zipcode, Mobile Number
-12. Click 'Create Account'
-13. Verify 'ACCOUNT CREATED!' is visible
-14. Click 'Continue'
-15. Verify 'Logged in as username' is visible
-16. Click 'Delete Account'
-17. Verify 'ACCOUNT DELETED!' is visible and click 'Continue'
+Navigates to the home page, clicks Signup/Login, fills the signup form with a
+unique email, completes account information, verifies ACCOUNT CREATED, continues,
+verifies "Logged in as abdallah" in the navbar, then deletes the account.
 
 ---
 
 ### TC02 — Login User with correct email and password
-**Class:** `RegisterLoginTests` · **Method:** `loginWithValidCredentials`
+**Class:** `RegisterLoginTests` · **Method:** `TC02_loginWithValidCredentials`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Click 'Signup / Login'
-4. Verify 'Login to your account' is visible
-5. Enter correct email and password
-6. Click 'login'
-7. Verify 'Logged in as username' is visible
-8. Click 'Delete Account'
-9. Verify 'ACCOUNT DELETED!' is visible
+Registers a fresh account (auto-logs in), logs out, logs back in with the same
+credentials, verifies the logged-in navbar label, then deletes the account.
 
 ---
 
 ### TC03 — Login User with incorrect email and password
-**Class:** `RegisterLoginTests` · **Method:** `loginWithInvalidCredentials`
+**Class:** `RegisterLoginTests` · **Method:** `TC03_loginWithInvalidCredentials`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Click 'Signup / Login'
-4. Verify 'Login to your account' is visible
-5. Enter incorrect email and password
-6. Click 'login'
-7. Verify error 'Your email or password is incorrect!' is visible
+Attempts login with a non-existent email and wrong password, then verifies the
+"Your email or password is incorrect!" error message is visible.
 
 ---
 
 ### TC04 — Logout User
-**Class:** `RegisterLoginTests` · **Method:** `logoutUser`
+**Class:** `RegisterLoginTests` · **Method:** `TC04_logoutUser`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Click 'Signup / Login'
-4. Verify 'Login to your account' is visible
-5. Enter correct email and password
-6. Click 'login'
-7. Verify 'Logged in as username' is visible
-8. Click 'Logout'
-9. Verify user is navigated to login page
+Registers a fresh account (auto-logs in), clicks Logout, and verifies the browser
+URL contains `/login`.
 
 ---
 
 ### TC05 — Register User with existing email
-**Class:** `RegisterLoginTests` · **Method:** `registerWithExistingEmail`
+**Class:** `RegisterLoginTests` · **Method:** `TC05_registerWithExistingEmail`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Click 'Signup / Login'
-4. Verify 'New User Signup!' is visible
-5. Enter name and an already-registered email address
-6. Click 'Signup'
-7. Verify error 'Email Address already exist!' is visible
+Attempts signup with the email from `existingUser.json` and verifies the
+"Email Address already exist!" error is shown.
+
+---
+
+### NEGATIVE TC-N01 — Login with empty credentials
+**Class:** `RegisterLoginTests` · **Method:** `NEGATIVE_TC_N01_loginWithEmptyCredentials`
+
+Submits the login form with both fields blank and asserts the user is NOT logged in.
+
+---
+
+### NEGATIVE TC-N02 — Register with invalid email format
+**Class:** `RegisterLoginTests` · **Method:** `NEGATIVE_TC_N02_registerWithInvalidEmailFormat`
+
+Attempts signup with a malformed email ("notAnEmail") and verifies the page stays on `/login`
+due to HTML5 field validation blocking the submission.
 
 ---
 
 ### TC06 — Contact Us Form
-**Class:** `ContactAndNavigationTests` · **Method:** `submitContactUsForm`
+**Class:** `ContactAndNavigationTests` · **Method:** `TC06_submitContactUsForm`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Click 'Contact Us'
-4. Verify 'GET IN TOUCH' is visible
-5. Enter name, email, subject and message
-6. Upload a file
-7. Click 'Submit'
-8. Click OK on the alert dialog
-9. Verify success message 'Success! Your details have been submitted successfully.'
-10. Click 'Home' and verify landing on home page
+Opens the Contact Us page, fills all fields, uploads `upload_sample.txt`, submits,
+accepts the browser alert, verifies the success message contains "Success", then
+clicks Home and verifies the home page is visible.
 
 ---
 
 ### TC07 — Verify Test Cases Page
-**Class:** `ContactAndNavigationTests` · **Method:** `navigateToTestCasesPage`
+**Class:** `ContactAndNavigationTests` · **Method:** `TC07_navigateToTestCasesPage`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Click 'Test Cases' in the navigation
-4. Verify user is navigated to the test cases page
+Clicks "Test Cases" in the navbar and asserts the URL contains `test_cases`.
 
 ---
 
 ### TC08 — Verify All Products and product detail page
-**Class:** `ProductTests` · **Method:** `verifyAllProductsAndDetailPage`
+**Class:** `ProductTests` · **Method:** `TC08_verifyAllProductsAndDetailPage`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Click 'Products'
-4. Verify ALL PRODUCTS page is displayed
-5. Verify the products list is visible
-6. Click 'View Product' on the first product
-7. Verify product detail page is opened
-8. Verify product name, category, price, availability, condition, brand are visible
+Navigates to Products, asserts the heading and product list are visible, clicks
+"View Product" on the first item, then asserts all six detail fields (name,
+category, price, availability, condition, brand) are visible.
 
 ---
 
 ### TC09 — Search Product
-**Class:** `ProductTests` · **Method:** `searchProduct`
+**Class:** `ProductTests` · **Method:** `TC09_searchProduct`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Click 'Products'
-4. Verify ALL PRODUCTS page is displayed
-5. Enter a product name in the search input and click Search
-6. Verify 'SEARCHED PRODUCTS' heading is visible
-7. Verify all products related to the search term are displayed
+On the Products page, searches for "Blue Top", asserts the "Searched Products"
+heading appears, and verifies at least one result is displayed.
 
 ---
 
 ### TC10 — Verify Subscription in home page
-**Class:** `SubscriptionTests` · **Method:** `subscriptionOnHomePage`
+**Class:** `SubscriptionTests` · **Method:** `TC10_subscriptionOnHomePage`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Scroll down to the footer
-4. Verify text 'SUBSCRIPTION' is visible
-5. Enter an email address and click the arrow button
-6. Verify success message 'You have been successfully subscribed!'
+Scrolls to the home page footer, asserts "SUBSCRIPTION" is visible, submits a
+unique email, and verifies the "You have been successfully subscribed!" message.
 
 ---
 
 ### TC11 — Verify Subscription in Cart page
-**Class:** `SubscriptionTests` · **Method:** `subscriptionOnCartPage`
+**Class:** `SubscriptionTests` · **Method:** `TC11_subscriptionOnCartPage`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Click 'Cart'
-4. Scroll down to the footer
-5. Verify text 'SUBSCRIPTION' is visible
-6. Enter an email address and click the arrow button
-7. Verify success message 'You have been successfully subscribed!'
+Navigates to the Cart page, scrolls to footer, verifies "SUBSCRIPTION", subscribes
+with a unique email, and asserts the success message.
 
 ---
 
 ### TC12 — Add Products in Cart
-**Class:** `CartTests` · **Method:** `addTwoProductsToCart`
+**Class:** `CartTests` · **Method:** `TC12_addTwoProductsToCart`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Click 'Products'
-4. Hover over the first product and click 'Add to cart'
-5. Click 'Continue Shopping'
-6. Hover over the second product and click 'Add to cart'
-7. Click 'View Cart'
-8. Verify both products are in the cart
-9. Verify their prices, quantities, and total price
+On the Products page, hovers and adds the first product (Continue Shopping), then
+hovers and adds the second product (View Cart). Asserts the cart contains at least
+two items.
 
 ---
 
 ### TC13 — Verify Product quantity in Cart
-**Class:** `CartTests` · **Method:** `verifyProductQuantityInCart`
+**Class:** `CartTests` · **Method:** `TC13_verifyProductQuantityInCart`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Click 'View Product' for any product on the home page
-4. Verify the product detail page is open
-5. Increase quantity to 4
-6. Click 'Add to cart'
-7. Click 'View Cart'
-8. Verify the product appears in the cart with quantity 4
+Clicks "View Product" from the home page, sets quantity to 4, adds to cart, opens
+the cart, and asserts the quantity shown is "4".
 
 ---
 
 ### TC14 — Place Order: Register while Checkout
-**Class:** `CheckoutTests` · **Method:** `placeOrderRegisterDuringCheckout`
+**Class:** `CheckoutTests` · **Method:** `TC14_placeOrderRegisterDuringCheckout`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Add a product to the cart
-4. Click 'Cart'
-5. Verify cart page is displayed
-6. Click 'Proceed To Checkout'
-7. Click 'Register / Login'
-8. Fill all signup details and create account
-9. Verify 'ACCOUNT CREATED!' and click 'Continue'
-10. Verify 'Logged in as username' in the header
-11. Click 'Cart'
-12. Click 'Proceed To Checkout'
-13. Verify Address Details and Review Your Order
-14. Enter a comment and click 'Place Order'
-15. Enter payment details: Name on Card, Card Number, CVC, Expiration date
-16. Click 'Pay and Confirm Order'
-17. Verify 'Your order has been placed successfully!'
-18. Click 'Delete Account'
-19. Verify 'ACCOUNT DELETED!' and click 'Continue'
+Adds a product, goes to cart, clicks Proceed to Checkout as a guest, clicks
+Register/Login, registers a new account, returns to the cart, proceeds to checkout,
+verifies address and order review, enters a comment, places the order, fills payment
+details, verifies "Your order has been placed successfully!", then deletes the account.
 
 ---
 
 ### TC15 — Place Order: Register before Checkout
-**Class:** `CheckoutTests` · **Method:** `placeOrderRegisterBeforeCheckout`
+**Class:** `CheckoutTests` · **Method:** `TC15_placeOrderRegisterBeforeCheckout`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Click 'Signup / Login' and create a new account
-4. Verify 'ACCOUNT CREATED!' and click 'Continue'
-5. Verify 'Logged in as username' in the header
-6. Add a product to the cart
-7. Click 'Cart'
-8. Verify cart page is displayed
-9. Click 'Proceed To Checkout'
-10. Verify Address Details and Review Your Order
-11. Enter a comment and click 'Place Order'
-12. Enter payment details and click 'Pay and Confirm Order'
-13. Verify 'Your order has been placed successfully!'
-14. Click 'Delete Account'
-15. Verify 'ACCOUNT DELETED!' and click 'Continue'
+Registers first, adds a product, proceeds to checkout while already logged in,
+places the order with payment, verifies success, then deletes the account.
 
 ---
 
 ### TC16 — Place Order: Login before Checkout
-**Class:** `CheckoutTests` · **Method:** `placeOrderLoginBeforeCheckout`
+**Class:** `CheckoutTests` · **Method:** `TC16_placeOrderLoginBeforeCheckout`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Click 'Signup / Login', enter email and password, click 'Login'
-4. Verify 'Logged in as username' in the header
-5. Add a product to the cart
-6. Click 'Cart'
-7. Verify cart page is displayed
-8. Click 'Proceed To Checkout'
-9. Verify Address Details and Review Your Order
-10. Enter a comment and click 'Place Order'
-11. Enter payment details and click 'Pay and Confirm Order'
-12. Verify 'Your order has been placed successfully!'
-13. Click 'Delete Account'
-14. Verify 'ACCOUNT DELETED!' and click 'Continue'
+Registers a fresh account (which auto-logs in), adds a product, proceeds to
+checkout, places the order, verifies success, then deletes the account.
 
 ---
 
 ### TC17 — Remove Products From Cart
-**Class:** `CartTests` · **Method:** `removeProductFromCart`
+**Class:** `CartTests` · **Method:** `TC17_removeProductFromCart`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Add a product to the cart
-4. Click 'Cart'
-5. Verify cart page is displayed
-6. Click the 'X' button for a specific product
-7. Verify the product is removed from the cart
+Adds a product via the detail page, opens the cart, clicks the delete (×) button
+on the first row, and asserts the cart is empty.
 
 ---
 
 ### TC18 — View Category Products
-**Class:** `CategoryBrandTests` · **Method:** `viewCategoryProducts`
+**Class:** `CategoryBrandTests` · **Method:** `TC18_viewCategoryProducts`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify categories are visible in the left sidebar
-3. Click on 'Women' category
-4. Click on a sub-category link under 'Women' (e.g. Dress)
-5. Verify the category page is displayed and the page heading contains the category name
-6. Click on any sub-category under 'Men' in the left sidebar
-7. Verify user is navigated to that Men category page
+Verifies the category sidebar is visible, expands Women → Dress, asserts the
+heading contains "DRESS" or "WOMEN", then expands Men → Tshirts and asserts the
+heading contains "TSHIRT" or "MEN".
 
 ---
 
 ### TC19 — View & Cart Brand Products
-**Class:** `CategoryBrandTests` · **Method:** `viewBrandProducts`
+**Class:** `CategoryBrandTests` · **Method:** `TC19_viewBrandProducts`
 
-1. Navigate to `https://automationexercise.com`
-2. Click 'Products'
-3. Verify Brands are visible in the left sidebar
-4. Click on any brand name
-5. Verify user is on the brand page and brand products are displayed
-6. Click on a different brand in the left sidebar
-7. Verify user is navigated to that brand page and products are visible
+On the Products page, asserts the brands sidebar is visible, clicks the first brand,
+verifies a non-empty title and at least one product, then clicks the second brand
+and repeats the assertion.
 
 ---
 
 ### TC20 — Search Products and Verify Cart After Login
-**Class:** `ProductTests` · **Method:** `searchProductsAndVerifyCartAfterLogin`
+**Class:** `ProductTests` · **Method:** `TC20_searchProductsAndVerifyCartAfterLogin`
 
-1. Navigate to `https://automationexercise.com`
-2. Click 'Products'
-3. Verify ALL PRODUCTS page is displayed
-4. Enter a product name in search and click Search
-5. Verify 'SEARCHED PRODUCTS' is visible
-6. Verify all matching products are visible
-7. Add those products to the cart
-8. Click 'Cart' and verify products are visible
-9. Click 'Signup / Login' and log in
-10. Go to Cart again
-11. Verify the same products are still in the cart after login
+Searches for "Blue Top", adds the first result to the cart, verifies the cart has
+items, logs in with `existingUser.json` credentials, re-opens the cart, and asserts
+the items are still present after login.
 
 ---
 
 ### TC21 — Add review on product
-**Class:** `ProductTests` · **Method:** `addReviewOnProduct`
+**Class:** `ProductTests` · **Method:** `TC21_addReviewOnProduct`
 
-1. Navigate to `https://automationexercise.com`
-2. Click 'Products'
-3. Verify ALL PRODUCTS page is displayed
-4. Click 'View Product' on any product
-5. Verify 'Write Your Review' section is visible
-6. Enter name, email, and review text
-7. Click 'Submit'
-8. Verify success message 'Thank you for your review.'
+Opens the first product's detail page, scrolls to "Write Your Review", submits a
+review (name, email, text), and verifies the "Thank you for your review." success
+message.
 
 ---
 
 ### TC22 — Add to cart from Recommended items
-**Class:** `CartTests` · **Method:** `addToCartFromRecommendedItems`
+**Class:** `CartTests` · **Method:** `TC22_addToCartFromRecommendedItems`
 
-1. Navigate to `https://automationexercise.com`
-2. Scroll to the bottom of the home page
-3. Verify 'RECOMMENDED ITEMS' section is visible
-4. Click 'Add To Cart' on a recommended product
-5. Click 'View Cart'
-6. Verify the product is displayed in the cart
+Scrolls to the "RECOMMENDED ITEMS" section on the home page, asserts it is visible,
+clicks "Add To Cart" on the first recommended item, navigates to the cart (via modal
+or navbar), and asserts the cart has items.
 
 ---
 
 ### TC23 — Verify address details in checkout page
-**Class:** `CheckoutTests` · **Method:** `verifyAddressDetailsAtCheckout`
+**Class:** `CheckoutTests` · **Method:** `TC23_verifyAddressDetailsAtCheckout`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Click 'Signup / Login' and create a new account (record the address used)
-4. Verify 'ACCOUNT CREATED!' and click 'Continue'
-5. Verify 'Logged in as username' in the header
-6. Add a product to the cart
-7. Click 'Cart'
-8. Verify cart page is displayed
-9. Click 'Proceed To Checkout'
-10. Verify the delivery address matches the address entered at registration
-11. Verify the billing address matches the address entered at registration
-12. Click 'Delete Account'
-13. Verify 'ACCOUNT DELETED!' and click 'Continue'
+Registers a new account, adds a product, proceeds to checkout, and asserts that the
+delivery address block contains the first name and city used during registration.
+Then deletes the account.
 
 ---
 
 ### TC24 — Download Invoice after purchase order
-**Class:** `CheckoutTests` · **Method:** `downloadInvoiceAfterOrder`
+**Class:** `CheckoutTests` · **Method:** `TC24_downloadInvoiceAfterOrder`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Add a product to the cart
-4. Click 'Cart' and verify cart page
-5. Click 'Proceed To Checkout'
-6. Click 'Register / Login' and create account
-7. Verify 'ACCOUNT CREATED!' and click 'Continue'
-8. Verify 'Logged in as username'
-9. Click 'Cart' → 'Proceed To Checkout'
-10. Verify Address Details and Review Your Order
-11. Enter a comment and click 'Place Order'
-12. Enter payment details and click 'Pay and Confirm Order'
-13. Verify 'Your order has been placed successfully!'
-14. Click 'Download Invoice' and verify the invoice downloads successfully
-15. Click 'Continue'
-16. Click 'Delete Account'
-17. Verify 'ACCOUNT DELETED!' and click 'Continue'
+Completes a full order flow (add product → checkout as guest → register → return to
+cart → place order → pay), verifies "Your order has been placed successfully!",
+clicks "Download Invoice", clicks Continue, then deletes the account.
 
 ---
 
 ### TC25 — Verify Scroll Up using 'Arrow' button and Scroll Down
-**Class:** `ScrollTests` · **Method:** `scrollUpWithArrowButton`
+**Class:** `ScrollTests` · **Method:** `TC25_scrollUpWithArrowButton`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Scroll down to the bottom of the page
-4. Verify 'SUBSCRIPTION' text is visible in the footer
-5. Click the arrow button at the bottom-right to scroll back to the top
-6. Verify the page has scrolled up and 'Full-Fledged practice website for Automation Engineers' text is visible
+Scrolls to the footer, verifies "SUBSCRIPTION" is visible, clicks the scroll-up
+arrow (bottom-right), and asserts the hero text "Full-Fledged practice website for
+Automation Engineers" is visible.
 
 ---
 
 ### TC26 — Verify Scroll Up without 'Arrow' button and Scroll Down
-**Class:** `ScrollTests` · **Method:** `scrollUpWithoutArrowButton`
+**Class:** `ScrollTests` · **Method:** `TC26_scrollUpWithoutArrowButton`
 
-1. Navigate to `https://automationexercise.com`
-2. Verify home page is visible
-3. Scroll down to the bottom of the page
-4. Verify 'SUBSCRIPTION' text is visible in the footer
-5. Scroll up to the top of the page (without using the arrow button)
-6. Verify the page has scrolled up and 'Full-Fledged practice website for Automation Engineers' text is visible
+Same as TC25 but scrolls back to the top via `window.scrollTo({top:0})` JavaScript
+instead of the arrow button.
 
 ---
 
 ## Registering Tests in testng.xml
 
-All test classes must be registered in `testng-suites/testng.xml` before Maven
-will execute them. Here is the complete, ready-to-use suite file covering all 26
-test cases:
+All test classes are registered in `testng-suites/Testng.xml`. The full suite:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 
-<suite name="AutomationExercise — 26 Test Cases" verbose="1">
+<suite name="AutomationExercise Test Suite" verbose="1">
 
     <test name="Registration and Login Tests">
         <classes>
@@ -771,20 +594,6 @@ test cases:
 </suite>
 ```
 
-### Running a single test class
-
-Comment out the blocks you do not need:
-
-```xml
-<!--
-<test name="Cart Tests">
-    <classes>
-        <class name="tests.CartTests"/>
-    </classes>
-</test>
--->
-```
-
 ### Running specific methods only
 
 ```xml
@@ -792,8 +601,8 @@ Comment out the blocks you do not need:
     <classes>
         <class name="tests.RegisterLoginTests">
             <methods>
-                <include name="registerNewUser"/>
-                <include name="loginWithValidCredentials"/>
+                <include name="TC01_registerNewUser"/>
+                <include name="TC02_loginWithValidCredentials"/>
             </methods>
         </class>
     </classes>
@@ -802,11 +611,11 @@ Comment out the blocks you do not need:
 
 ### Running in parallel (methods)
 
-Each `@Test` method gets its own browser via `@BeforeMethod`, so parallel-by-methods
-is safe without any code changes:
+Each `@Test` gets its own browser via `@BeforeMethod` (ThreadLocal driver), so
+parallel-by-methods is safe without code changes:
 
 ```xml
-<suite name="AutomationExercise — 26 Test Cases" verbose="1"
+<suite name="AutomationExercise Test Suite" verbose="1"
        parallel="methods" thread-count="4">
     ...
 </suite>
@@ -817,14 +626,14 @@ is safe without any code changes:
 ## Running the Tests
 
 ```bash
-# Run all 26 test cases
+# Run all tests via testng.xml
 mvn test
 
 # Run a single test class
 mvn test -Dtest=CartTests
 
 # Run a single test method
-mvn test -Dtest=CartTests#addTwoProductsToCart
+mvn test -Dtest=CartTests#TC12_addTwoProductsToCart
 
 # Run headless on CI
 mvn test -Dheadless=true
@@ -855,79 +664,149 @@ On-disk screenshots are saved under `Screenshots/` with this naming pattern:
 
 ```
 Screenshots/
-├── TC01_AfterRegistration_2025-07-21_14-35-22-123.png
-└── FAILED_loginWithInvalidCredentials_2025-07-21_14-36-01-456.png
+├── TC01_LoggedIn_2025-07-21_14-35-22-123.png
+├── TC02_LoggedIn_2025-07-21_14-36-01-456.png
+└── FAILED_TC03_loginWithInvalidCredentials_2025-07-21_14-37-00-789.png
 ```
 
 ---
 
 ## Framework API Quick Reference
 
-All interactions go through `driver` (inherited from `BasePage` or accessed via
-`getDriver()` in tests). Never add `Thread.sleep()` — all waits are handled internally.
+All interactions go through the `ASM_Framework` instance — accessed via `driver`
+in page objects (inherited from `BasePage`) or via `getDriver()` in test classes
+(inherited from `BaseTest`). The classes inside `utils/framework/` are internal
+implementation; never import them directly.
 
 ```java
-// Navigation
+// ── Navigation ────────────────────────────────────────────────────────────
 driver.goToURL("https://automationexercise.com/login");
-driver.manageNavigationButtons("back");        // "back" | "forward" | "refresh"
+driver.manageNavigationButtons("back");   // "back" | "forward" | "refresh"
 driver.getCurrentPageTitle();
 driver.getCurrentPageURL();
-driver.manageScreenSize("maximize");
+driver.manageScreenSize("maximize");      // "maximize" | "minimize" | fullscreen
 
-// Finding Elements
+// ── Finding Elements ──────────────────────────────────────────────────────
 WebElement el = driver.findElement("css", "[data-qa='login-email']");
 By         by = driver.getBy("id", "submit-btn");
 
-// Interactions
+// Supported locator types: "id", "name", "class", "xpath", "css"
+
+// ── Interactions ──────────────────────────────────────────────────────────
 driver.clickElement(locator);
-driver.writeInElement(locator, "text");        // clears first, then types
+driver.clickElement(element);
+driver.writeInElement(locator, "text");   // clears first, then types
+driver.writeInElement(element, "text");
 driver.getElementText(locator);
 driver.clearElementText(locator);
 
-// State Checks
+// ── Click + Navigation Wait ───────────────────────────────────────────────
+// Clicks the element then waits until the URL contains the expected substring.
+// Use for navigation-bound clicks; not for modals or JS-only actions.
+driver.clickAndWaitForUrl(locator, "/product_details/", 10);
+
+// ── Element State ─────────────────────────────────────────────────────────
 driver.validateElementIsDisplayed(element);   // returns boolean
 driver.validateElementIsEnabled(element);
 driver.validateElementIsSelected(element);
 
-// Dropdowns
+// ── Dropdowns (<select>) ──────────────────────────────────────────────────
 driver.selectFromDropDownMenu(locator, "visible", "Egypt");
 driver.selectFromDropDownMenu(locator, "value",   "eg");
 driver.selectFromDropDownMenu(locator, "index",   "2");
+driver.selectFromDropDownMenu(locator, "contains","Egy");
 
-// Advanced Interactions
+driver.deselectFromDropDownMenu(locator, "index", "0");
+driver.deselectFromDropDownMenu(locator, "all",   "");
+
+// ── Advanced Interactions ─────────────────────────────────────────────────
 driver.hoverOverElement(locator);
+driver.hoverOverElement(element);
 driver.doubleClick(locator);
 driver.rightClick(locator);
-driver.scrollToElement(locator);              // centers element in viewport
+driver.scrollToElement(locator);          // centers element in viewport (JS)
+driver.scrollToElement(element);
 driver.dragAndDrop(sourceLocator, targetLocator);
 
-// Checkboxes & Radio Buttons
-driver.checkCheckbox(locator);
-driver.uncheckCheckbox(locator);
-driver.selectRadioButton(locator);
+// ── Checkboxes & Radio Buttons ────────────────────────────────────────────
+driver.checkCheckbox(locator);            // clicks only if not already checked
+driver.uncheckCheckbox(locator);          // clicks only if currently checked
+driver.selectRadioButton(locator);        // clicks only if not already selected
 
-// Waits (explicit)
+// ── Waits ─────────────────────────────────────────────────────────────────
+// Prefer AdsHelper.waitForElement() in page objects (kills ads before waiting).
+// Use framework waits for non-ad-affected elements.
 driver.setExplicitWait(locator, 15);
-driver.setFluentWait(locator, 10, 500, "Timeout message");
+driver.setFluentWait(locator, 10, 500, "Timeout waiting for element");
+driver.setImplicitWait(5);                // avoid mixing with explicit waits
 
-// Alerts
+// ── Alerts ────────────────────────────────────────────────────────────────
 driver.acceptAlert();
 driver.dismissAlert();
 driver.getAlertText();
 driver.typeInAlert("text");
 
-// iFrames
+// ── iFrames ───────────────────────────────────────────────────────────────
 driver.switchToIFrame(locator);
+driver.switchToIFrame(element);
+driver.switchToIFrameByIndex(0);
+driver.switchToIFrameByNameOrId("myFrame");
 driver.switchToDefaultContent();
+driver.switchToParentFrame();
 
-// Windows & Tabs
+// ── Windows & Tabs ────────────────────────────────────────────────────────
 String main = driver.getCurrentWindowHandle();
 driver.switchToNewWindow(main);
+driver.switchToWindowByIndex(1);
 driver.closeCurrentWindowAndSwitchTo(main);
+driver.getWindowCount();
 
-// Screenshots (saved to disk + attached to Allure)
-loginPage.saveScreenshot("TC01_AfterLogin", getDriver());
+// ── Screenshots (saved to disk + attached to Allure) ─────────────────────
+// From a test class:
+AllureHelper.saveScreenshot("TC01_AfterLogin", getDriver());
+
+// From a page object (BasePage helper):
+saveScreenshot("TC01_AfterLogin", driver);
+
+// Raw capture (returns Path for manual use):
+Path shot = getDriver().takeScreenshot("LoginPage");
 ```
+
+### AdsHelper — ad-safe primitives (used inside page objects)
+
+`BasePage` wraps these and exposes them to all page classes. Use them instead of
+raw `driver.clickElement()` on automationexercise.com, where ad overlays
+frequently intercept clicks.
+
+```java
+// From any page class (inherited from BasePage):
+jsClick(locator);        // kill ads + JS click — use for ALL navbar/link clicks
+jsClick(element);
+safeClick(locator);      // kill ads + regular click with retry, JS as last resort
+waitFor(locator);        // kill ads + wait for visibility before asserting
+waitAndGet(locator);     // same, returns the element
+killAds();               // strip ads only — call before writing into a field
+```
+
+---
+
+## Lifecycle Overview
+
+`BaseTest` manages the full driver lifecycle so tests stay independent:
+
+```
+@BeforeSuite   → prints environment banner once
+  @BeforeClass → logs class name to console + Allure description
+    @BeforeMethod → creates fresh ASM_Framework, maximizes, navigates to base URL
+      @Test
+    @AfterMethod  → on FAILURE: captures screenshot + attaches to Allure
+                    always: navigates to about:blank, quits browser, clears ThreadLocal
+  @AfterClass  → logs completion banner
+@AfterSuite    → prints total elapsed time
+```
+
+Each `@Test` runs with its own isolated browser instance. This makes every test
+independently executable and safe for parallel execution at the method level.
 
 ---
 

@@ -12,56 +12,44 @@
 HOW TO ADD A NEW TEST CLASS
 ────────────────────────────
 1. Create YourTests.java in src/test/java/tests/ extending BaseTest
-2. Copy the <test> block template below and fill in your class name
+2. Copy a <test> block below, rename it, and fill in your class name
 3. Save — Maven will pick it up on the next `mvn test`
-
-TEMPLATE:
-    <test name="Your Feature Tests">
-        <classes>
-            <class name="tests.YourTests"/>
-        </classes>
-    </test>
 
 HOW TO SKIP A TEST CLASS TEMPORARILY
 ──────────────────────────────────────
-Wrap the <test> block in a comment:
-    <!-
-    <test name="Cart Tests">
-        <classes>
-            <class name="tests.CartTests"/>
-        </classes>
-    </test>
-    - - >    ← remove the spaces between - - > to close the comment
+Wrap the <test> block in a comment.
 
 HOW TO RUN SPECIFIC METHODS ONLY
 ──────────────────────────────────
-    <test name="Login Tests">
+    <test name="Registration and Login Tests">
         <classes>
-            <class name="tests.LoginTests">
+            <class name="tests.RegisterLoginTests">
                 <methods>
-                    <include name="loginWithValidCredentials"/>
-                    <include name="verifyLoginPageIsVisible"/>
+                    <include name="TC01_registerNewUser"/>
+                    <include name="TC02_loginWithValidCredentials"/>
                 </methods>
             </class>
         </classes>
     </test>
+
+HOW TO RUN IN PARALLEL (methods)
+──────────────────────────────────
+Each @Test gets its own browser via @BeforeMethod, so parallel-by-methods
+is safe without any code changes. Just add to the <suite> tag:
+    parallel="methods" thread-count="4"
 -->
 
 <suite name="AutomationExercise Test Suite" verbose="1">
 
-    <!--
-        Add your <test> blocks here as you create each test class.
-        Example — uncomment and fill in when ready:
-
-    <test name="Login Tests">
+    <test name="Registration and Login Tests">
         <classes>
-            <class name="tests.LoginTests"/>
+            <class name="tests.RegisterLoginTests"/>
         </classes>
     </test>
 
-    <test name="Register Tests">
+    <test name="Contact Us and Navigation Tests">
         <classes>
-            <class name="tests.RegisterTests"/>
+            <class name="tests.ContactAndNavigationTests"/>
         </classes>
     </test>
 
@@ -71,17 +59,34 @@ HOW TO RUN SPECIFIC METHODS ONLY
         </classes>
     </test>
 
+    <test name="Subscription Tests">
+        <classes>
+            <class name="tests.SubscriptionTests"/>
+        </classes>
+    </test>
+
     <test name="Cart Tests">
         <classes>
             <class name="tests.CartTests"/>
         </classes>
     </test>
 
-    <test name="Checkout Tests">
+    <test name="Checkout and Orders Tests">
         <classes>
             <class name="tests.CheckoutTests"/>
         </classes>
     </test>
-    -->
+
+    <test name="Category and Brand Tests">
+        <classes>
+            <class name="tests.CategoryBrandTests"/>
+        </classes>
+    </test>
+
+    <test name="Scroll Behaviour Tests">
+        <classes>
+            <class name="tests.ScrollTests"/>
+        </classes>
+    </test>
 
 </suite>

@@ -21,7 +21,7 @@ public class HomePage extends BasePage
     private final By contactUsLink     = By.cssSelector("a[href='/contact_us']");
 
     // ── Home-page visibility ──────────────────────────────────────────────
-    private final By homeLogo          = By.cssSelector("img[alt='Website for automation practice']");
+    private final By homeLogo          = By.cssSelector("a[href='/'] img");
 
     // ── Logged-in label ───────────────────────────────────────────────────
     private final By loggedInLabel     = By.xpath("//a[contains(.,'Logged in as')]");
@@ -45,7 +45,7 @@ public class HomePage extends BasePage
     private final By scrollUpArrow = By.id("scrollUp");
 
     // ── Hero text ─────────────────────────────────────────────────────────
-    private final By heroText = By.cssSelector(".active .item h2");
+    private final By heroText = By.cssSelector("div div[class='col-sm-6'] h2");
 
     // ── Category sidebar ──────────────────────────────────────────────────
     private final By categorySidebar   = By.cssSelector(".left-sidebar");

@@ -33,10 +33,6 @@ public class ScrollTests extends BaseTest
 
         home.clickScrollUpArrow();
 
-        // Wait for hero text to be back in view after scroll animation
-        AdsHelper.waitForElement(getDriver().getDriver(),
-                By.cssSelector(".active .item h2"));
-
         Assert.assertTrue(home.isHeroTextVisible(),
                 "'Full-Fledged practice website for Automation Engineers' should be visible after scroll up");
     }
@@ -61,10 +57,6 @@ public class ScrollTests extends BaseTest
 
         // Scroll to top via JS — no arrow button
         home.scrollUpWithJS();
-
-        // Wait for hero text to be back in view after scroll animation
-        AdsHelper.waitForElement(getDriver().getDriver(),
-                By.cssSelector(".active .item h2"));
 
         Assert.assertTrue(home.isHeroTextVisible(),
                 "'Full-Fledged practice website for Automation Engineers' should be visible after scroll up");

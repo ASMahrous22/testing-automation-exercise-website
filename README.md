@@ -646,6 +646,8 @@ mvn test -Dbrowser=firefox
 
 ## Viewing the Allure Report
 
+### Using Maven
+
 ```bash
 # Generate and open the report in your browser (recommended)
 mvn allure:serve
@@ -653,6 +655,25 @@ mvn allure:serve
 # Generate static HTML only
 mvn allure:report
 # Output: target/site/allure-maven-plugin/index.html
+```
+
+### Without Maven (Allure CLI)
+
+```bash
+# Generate and open the report in your browser
+allure serve allure-results
+
+# Generate static HTML report
+allure generate allure-results --clean -o allure-report
+
+# Open the generated report
+allure open allure-report
+```
+
+Output:
+
+```text
+allure-report/index.html
 ```
 
 The report shows a pass/fail breakdown per test class, full stack traces for
